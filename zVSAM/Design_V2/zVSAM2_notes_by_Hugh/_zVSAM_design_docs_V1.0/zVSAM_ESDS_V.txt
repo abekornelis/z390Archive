@@ -1,0 +1,614 @@
+This document will explain how a Block in a zVSAM file is structured.
+
+A Block can be any size between 4096 bytes (4 KB) and 1,048,576 bytes (1 MB)
+Up pto 256 records can be stored in a Block.
+If a Block holds 256 records and is not full, the remaining space is unusable,
+except for extending existing records (if they are Variable-length records)
+within the Block. Thus, large Block sizes can waste considerable amounts of space.
+
+Each Block has a Block Header and a Block Footer.
+
+Here we'll work out an example for an ESDS with a Block size of 4096 bytes,
+holding records with variable lengths, and therefore preceded by a RDW.
+The first, unaddressable Block in the file is a Prefix Block, followed by
+Block 0, which is used as a spacemap Block.
+Assuming 12 records in the file with lengths 686, 695, 712, 677, 682, 686,
+648, 655, 689, 649, 655, 744, the data would be on Blocks 1 through 3 as follows:
+
+============================================== Prefix Block
+
+Block Header            Prefix Block - hex  -
+addr  len +----------+  +----------+ addr len 
+   0    3 | BHDREYE  |  | 'HDR'    |    0   3 
+          +----------+  +----------+          
+   3    1 | BHDRVER  |  |       01 |    3   1 
+          +----------+  +----------+          
+   4    1 | BHDRSEQ# |  |       05 |    4   1 
+          +----------+  +----------+          
+   5    1 | BHDRFLGS |  |       80 |    5   1 Prefix Block
+          +----------+  +----------+          
+   6    1 | BHDR#REC |  |       00 |    6   1 n.a.
+          +----------+  +----------+          
+   7    1 | BHDRXLVL |  |       00 |    7   1 n.a.
+          +----------+  +----------+          
+   8    8 | BHDRSELF |  | FFFFFFFF |    8   8 
+          +----------+  +----------+          
+  16    8 | BHDRNEXT |  | FFFFFFFF |   10   8 
+          +----------+  +----------+          
+  24    8 | BHDRPREV |  | FFFFFFFF |   18   8 
+          +----------+  +----------+          
+  32    3 | BHDRFRE@ |  |   0000A0 |   20   3 just after PFX block
+          +----------+  +----------+          
+  35    3 | BHDRFREE |  |   000F2D |   23   3 
+          +----------+  +----------+          
+  38    2 |          |  |     0000 |   26   2 
+          +----------+  +----------+          
+
+Prefix Data             Prefix Block - hex  -
+addr  len +----------+  +----------+ addr len 
+  40    3 | PFXVOL@  |  |   000FEE |   28   3 points halfword-prefixed volume field
+          +----------+  +----------+          
+  43    3 | PFXNAME@ |  |   000FDB |   2B   3 points halfword-prefixed name field
+          +----------+  +----------+          
+  46    3 | PFXPATH@ |  |   000FD0 |   2E   3 points halfword-prefixed path field
+          +----------+  +----------+          
+  49    3 | PFXAVOL@ |  |   000000 |   31   3 
+          +----------+  +----------+          
+  52    3 | PFXANAM@ |  |   000000 |   34   3 
+          +----------+  +----------+          
+  55    3 | PFXAPAT@ |  |   000000 |   37   3 
+          +----------+  +----------+          
+  58    6 |          |  | 00000000 |   3A   6 
+          +----------+  +----------+          
+  64    8 | PFXHXLRA |  | 00000003 |   40   8 --> Last allocated block
+          +----------+  +----------+          
+  72    8 | PFXBMAP  |  | 00000000 |   48   8 --> First Spacemap Block
+          +----------+  +----------+          
+  80    8 | PFXEMAP  |  | 00000000 |   50   8 --> Last Spacemap Block
+          +----------+  +----------+          
+  88    8 | PFXMAPNW |  | 00000000 |   58   8 --> Current Spacemap Block
+          +----------+  +----------+          
+  96    8 | PFXBDATA |  | 00000001 |   60   8 --> First Data Block
+          +----------+  +----------+          
+ 104    8 | PFXEDATA |  | 00000003 |   68   8 --> Last Data Block
+          +----------+  +----------+          
+ 112    8 | PFXBOVFL |  | 00000000 |   70   8 n.a.
+          +----------+  +----------+          
+ 120    8 | PFXEOVFL |  | 00000000 |   78   8 n.a.
+          +----------+  +----------+          
+ 128    8 | PFXROOT  |  | 00000000 |   80   8 n.a.
+          +----------+  +----------+          
+ 136    3 | PFXMAPOF |  | 00000000 |   88   3 Block 3 is mapped by byte 0 of spacemap
+          +----------+  +----------+          
+ 139    4 | PFXMAPDT |  | 20160217 |   8B   4 
+          +----------+  +----------+          
+ 143    1 | PFXFRSPC |  |       00 |   8F   1 set to 0 for this example
+          +----------+  +----------+          
+ 144    1 | PFXFRBLK |  |       00 |   90   1 set to 0 for this example
+          +----------+  +----------+          
+ 145    1 | PFXFRINT |  |       00 |   91   1 set to 0 for this example
+          +----------+  +----------+          
+ 146    1 | PFXFFLGS |  |       08 |   92   1 ESDS
+          +----------+  +----------+          
+ 147    1 | PFXRFLGS |  |       00 |   93   1 Variable, unspanned
+          +----------+  +----------+          
+ 148    4 | PFXRCLEN |  | 00000640 |   94   4 1600 = X'640' - max. allowable length
+          +----------+  +----------+          
+ 152    2 | PFXKYLEN |  |       00 |   98   2 n.a. for ESDS
+          +----------+  +----------+          
+ 154    1 | PFXKYFL# |  |       00 |   9A   1 n.a. for ESDS
+          +----------+  +----------+          
+ 155    3 | PFXKYFL@ |  |       00 |   9B   3 n.a. for ESDS
+          +----------+  +----------+          
+ 158    1 | PFXALTHR |  |       00 |   9E   1 not used
+          +----------+  +----------+          
+ 159    1 |          |  |       00 |   9F   1 
+          +----------+  +----------+          
+
+Prefix Data             Prefix Block - hex  -
+addr  len +----------+  +----------+ addr len 
+4046    2 |(length  )|  |     000D |  FCE   2 
+          +----------+  +----------+          
+4048   11 |(PFXPATH )|  |(UTF-8   )|  FD0   B C:\z390Data
+          +----------+  +----------+          
+4059    2 |(length  )|  |     0013 |  FDB   2 
+          +----------+  +----------+          
+4061   17 |(PFXNAME )|  |(UTF-8   )|  FDD  11 Sample_ESDS_V.dta
+          +----------+  +----------+          
+4078    2 |(length  )|  |     000C |  FEE   2 
+          +----------+  +----------+          
+4080   12 |(PFXVOL  )|  |(UTF-8   )|  FF0   C BIXOFT_0001A
+          +----------+  +----------+          
+
+Block Footer            Prefix Block - hex  -
+addr  len +----------+  +----------+ addr len 
+4092    3 | BFTREYE  |  | 'FTR'    |  FFC   3 
+          +----------+  +----------+          
+4095    1 | BFTRSEQ# |  |       05 |  FFF   1 
+          +----------+  +----------+          
+
+============================================== Block 0 (Spacemap Block)
+
+Block Header              Block 0    - hex  -
+addr  len +----------+  +----------+ addr len 
+   0    3 | BHDREYE  |  | 'HDR'    |    0   3 
+          +----------+  +----------+          
+   3    1 | BHDRVER  |  |       01 |    3   1 
+          +----------+  +----------+          
+   4    1 | BHDRSEQ# |  |       C2 |    4   1 
+          +----------+  +----------+          
+   5    1 | BHDRFLGS |  |       40 |    5   1 Spacemap Block
+          +----------+  +----------+          
+   6    1 | BHDR#REC |  |       00 |    6   1 n.a.
+          +----------+  +----------+          
+   7    1 | BHDRXLVL |  |       00 |    7   1 n.a.
+          +----------+  +----------+          
+   8    8 | BHDRSELF |  | 00000000 |    8   8 
+          +----------+  +----------+          
+  16    8 | BHDRNEXT |  | FFFFFFFF |   10   8 
+          +----------+  +----------+          
+  24    8 | BHDRPREV |  | FFFFFFFF |   18   8 
+          +----------+  +----------+          
+  32    3 | BHDRFRE@ |  |   000000 |   20   3 no free space
+          +----------+  +----------+          
+  35    3 | BHDRFREE |  |   000000 |   23   3 no free space
+          +----------+  +----------+          
+  38    2 |          |  |     0000 |   26   2 
+          +----------+  +----------+          
+
+Spacemap Area             Block 0    - hex  -
+addr  len +----------+  +----------+ addr len 
+  40    1 |          |  | 11010110 |   28   1 first entry (binary value)
+          +----------+  +----------+          
+  41 4051 |          |  | 00000000 |   29 FD3 all subsequent entries
+          +----------+  +----------+          
+
+First byte: covers Blocks 0-3.
+            Block 0 is a spacemap block, which is full: B'11'
+            Block 1 is a data block, no room for a record left: B'01'
+            Block 2 is a data block, no room for a record left: B'01'
+                    i.e. last time we tried, record dit not fit.
+                    Since ESDS block is not eligible for allocation anymore
+            Block 3 is a data block, with room left for a record: B'10'
+                    i.e. last time we tried allocation was successful
+All other bytes: 4 entries of B'00' to indicate unallocated Blocks
+
+Block Footer              Block 0    - hex  -
+addr  len +----------+  +----------+ addr len 
+4092    3 | BFTREYE  |  | 'FTR'    |  FFC   3 
+          +----------+  +----------+          
+4095    1 | BFTRSEQ# |  |       C2 |  FFF   1 
+          +----------+  +----------+          
+
+================================================================================ Block 1-3
+
+Block Header              Block 1          Block 2          Block 3    - hex  -
+addr len  +----------+  +----------+     +----------+     +----------+ addr len 
+   0    3 | BHDREYE  |  | 'HDR'    |     | 'HDR'    |     | 'HDR'    |    0   3 
+          +----------+  +----------+     +----------+     +----------+          
+   3    1 | BHDRVER  |  |       01 |     |       01 |     |       01 |    3   1 
+          +----------+  +----------+     +----------+     +----------+          
+   4    1 | BHDRSEQ# |  |       A4 |     |       C1 |     |       52 |    4   1 
+          +----------+  +----------+     +----------+     +----------+          
+   5    1 | BHDRFLGS |  |       20 |     |       20 |     |       20 |    5   1 
+          +----------+  +----------+     +----------+     +----------+          
+   6    1 | BHDR#REC |  |       05 |     |       05 |     |       02 |    6   1 
+          +----------+  +----------+     +----------+     +----------+          
+   7    1 | BHDRXLVL |  |       00 |     |       00 |     |       00 |    7   1 
+          +----------+  +----------+     +----------+     +----------+          
+   8    8 | BHDRSELF |  | 00000100 |     | 00000200 |     | 00000300 |    8   8 
+          +----------+  +----------+     +----------+     +----------+          
+  16    8 | BHDRNEXT |  | 00000200 | --> | 00000300 | --> | FFFFFFFF |   10   8 
+          +----------+  +----------+     +----------+     +----------+          
+  24    8 | BHDRPREV |  | FFFFFFFF | <-- | 00000100 | <-- | 00000200 |   18   8 
+          +----------+  +----------+     +----------+     +----------+          
+  32    3 | BHDRFRE@ |  |   000040 |     |   000044 |     |   000030 |   20   3 
+          +----------+  +----------+     +----------+     +----------+          
+  35    3 | BHDRFREE |  |   00022C |     |   000012 |     |   000CE0 |   23   3 
+          +----------+  +----------+     +----------+     +----------+          
+  38    2 |          |  |     0000 |     |     0000 |     |     0000 |   26   2 
+          +----------+  +----------+     +----------+     +----------+          
+
+Table of record pointers  Block 1          Block 2          Block 3    - hex  -
+addr len  +----------+  +----------+     +----------+     +----------+ addr len 
+  40    0 | RPTRTBL  |  |          |     |          |     |          |   28   0 
+          +----------+  +----------+     +----------+     +----------+          
+  40    1 | RPTRFLGS |  |       00 |     |       00 |     |       00 |   28   1 entry[0]
+          +----------+  +----------+     +----------+     +----------+          
+  41    3 | RPTRREC@ |  |   000D4A |     |   000D4A |     |   000D10 |   29   3 
+          +----------+  +----------+     +----------+     +----------+          
+  44    1 | RPTRFLGS |  |       00 |     |       00 |     |       FF |   2C   1 entry[1] / terminator
+          +----------+  +----------+     +----------+     +----------+          
+  45    3 | RPTRREC@ |  |   000A8F |     |   000ABE |     |   FFFFFF |   2D   3 
+          +----------+  +----------+     +----------+     +----------+          
+  48    1 | RPTRFLGS |  |       00 |     |       00 |                    30   1 entry[2]
+          +----------+  +----------+     +----------+                           
+  49    3 | RPTRREC@ |  |   0007C3 |     |   00082B |                    31   3 
+          +----------+  +----------+     +----------+                           
+  52    1 | RPTRFLGS |  |       00 |     |       00 |                    34   1 entry[3]
+          +----------+  +----------+     +----------+                           
+  53    3 | RPTRREC@ |  |   00051A |     |   000576 |                    35   3 
+          +----------+  +----------+     +----------+                           
+  56    1 | RPTRFLGS |  |       00 |     |       00 |                    38   1 entry[4]
+          +----------+  +----------+     +----------+                           
+  57    3 | RPTRREC@ |  |   00026C |     |   0002E9 |                    39   3 
+          +----------+  +----------+     +----------+                           
+  60    1 | RPTRFLGS |  |       FF |     |       00 |                    3C   1 entry[5] / terminator
+          +----------+  +----------+     +----------+                           
+  61    3 | RPTRREC@ |  |   FFFFFF |     |   000056 |                    3D   3 
+          +----------+  +----------+     +----------+                           
+  64    1 | RPTRFLGS |                   |       FF |                    40   1 terminator entry
+          +----------+                   +----------+                           
+  65    3 | RPTRREC@ |                   |   FFFFFF |                    41   3 
+          +----------+                   +----------+                           
+
+Free Space                Block 1          Block 2          Block 3    - hex  -
+addr len  +----------+                                    +----------+ addr len 
+  48   16 | free     |                                    |   --     |   30  10 
+          +----------+  +----------+                      |          |          
+  64    4 | free     |  |   --     |                      |   --     |   40   4 
+          +----------+  |          |     +----------+     |          |          
+  68   18 | free     |  |   --     |     |   --     |     |   --     |   44  12 
+          +----------+  |          |     +----------+     |          |          
+  86  534 | free     |  |   --     |                      |   --     |   56 216 
+          +----------+  +----------+                      |          |          
+ 620 2724 | free     |                                    |   --     |  26C AA4 
+          +----------+                                    +----------+          
+
+Records                   Block 1                                      - hex  -
+addr len  +----------+  +----------+                                   addr len 
+ 620    4 | RDW      |  | 000002AE |                                    26C   4 RDW[4]
+          +----------+  +----------+                                            
+ 624  682 | data     |  | record05 |                                    270 2AA record[4]
+          +----------+  +----------+                                            
+1306    4 | RDW      |  | 000002A9 |                                    51A   4 RDW[3]
+          +----------+  +----------+                                            
+1310  677 | data     |  | record04 |                                    51E 2A5 record[3]
+          +----------+  +----------+                                            
+1987    4 | RDW      |  | 000002CC |                                    7C3   4 RDW[2]
+          +----------+  +----------+                                            
+1991  712 | data     |  | record03 |                                    7C7 2C8 record[2]
+          +----------+  +----------+                                            
+2703    4 | RDW      |  | 000002BB |                                    A8F   4 RDW[1]
+          +----------+  +----------+                                            
+2707  695 | data     |  | record02 |                                    A93 2B7 record[1]
+          +----------+  +----------+                                            
+3402    4 | RDW      |  | 000002B2 |                                    D4A   4 RDW[0]
+          +----------+  +----------+                                            
+3406  686 | data     |  | record01 |                                    D4E 2AE record[0]
+          +----------+  +----------+                                            
+
+Records                                    Block 2                     - hex  -
+addr len  +----------+                   +----------+                  addr len 
+  86    4 | RDW      |                   | 00000293 |                    56   4 RDW[5]
+          +----------+                   +----------+                           
+  90  655 | data     |                   | record11 |                    5A 28F record[5]
+          +----------+                   +----------+                           
+ 745    4 | RDW      |                   | 0000028D |                   2E9   4 RDW[4]
+          +----------+                   +----------+                           
+ 749  649 | data     |                   | record10 |                   2ED 289 record[4]
+          +----------+                   +----------+                           
+1398    4 | RDW      |                   | 000002B5 |                   576   4 RDW[3]
+          +----------+                   +----------+                           
+1402  689 | data     |                   | record09 |                   57A 2B1 record[3]
+          +----------+                   +----------+                           
+2091    4 | RDW      |                   | 00000293 |                   82B   4 RDW[2]
+          +----------+                   +----------+                           
+2095  655 | data     |                   | record08 |                   82F 28F record[2]
+          +----------+                   +----------+                           
+2750    4 | RDW      |                   | 0000028C |                   ABE   4 RDW[1]
+          +----------+                   +----------+                           
+2754  648 | data     |                   | record07 |                   AC2 288 record[1]
+          +----------+                   +----------+                           
+3402    4 | RDW      |                   | 000002B2 |                   D4A   4 RDW[0]
+          +----------+                   +----------+                           
+3404  686 | data     |                   | record06 |                   D4E 2AE record[0]
+          +----------+                   +----------+                           
+
+Records                                                     Block 3    - hex  -
+addr len  +----------+                                    +----------+ addr len 
+3344    4 | RDW      |                                    | 000002EC |  D10   4 RDW[0]
+          +----------+                                    +----------+          
+3348  744 | data     |                                    | record12 |  D14 2E8 record[0]
+          +----------+                                    +----------+          
+
+Block Footer              Block 1          Block 2          Block 3    - hex  -
+addr len  +----------+  +----------+     +----------+     +----------+ addr len 
+4092    3 | BFTREYE  |  | 'FTR'    |     | 'FTR'    |     | 'FTR'    |  FFC   3 
+          +----------+  +----------+     +----------+     +----------+          
+4095    1 | BFTRSEQ# |  |       A4 |     |       C1 |     |       52 |  FFF   1 
+          +----------+  +----------+     +----------+     +----------+          
+
+================================================================================
+
+BHDREYE  is an EYE-catcher to identlfy the start of the Block Header.
+         It's value is always the characters 'HDR'
+
+BHDRVER  Is a one-byte version indicator, used to enable backward
+         compatability from future design versions. The current version is 1.
+
+BHDRSEQ# is a one-byte sequence number, incremented each time the Block
+         is written. When the counter reaches 256 it wraps back to zero.
+         It is kept in sync with BFTRSEQ#. Whenever they are not equal,
+         the Block has not been written completely and will be regarded
+         as damaged.
+
+BHDRFLGS is a one-byte flag field containing the Block type.
+         For a data Block, the value is X'20'.
+
+BHDR#REC is a one-byte field containing the number of records present
+         in this Block. Five 686-byte records will fit on a 4K-Block.
+         The number reflects the number of pointer entries on the Block.
+
+BHDRXLVL is used only for index components. For an ESDS it contains zeros.
+
+BHDRSELF is to double-check the file has not been damaged.
+         it contains the Block's own XLRA - a 7-byte Block address
+         with a byte of zeros appended.
+         The first four bytes of zeroes are not shown in the table above.
+
+BHDRNEXT points to the next logical Block on the Data Block chain.
+         In an ESDS this should normally be the physical
+         sequence of Blocks (with the exception of an occasional
+         intermittent spacemap Block. Thus the Prefix Block field
+         PFXBDATA points to Block 1 (Block 0 is a spacemap Block),
+         Block 1 points to Block 2, Block 2 points to Block 3, etc.
+         The last Block on the chain has foxes to indicate end of chain.
+         The first four bytes of zeroes are not shown in the table above.
+
+BHDRPREV points to the preceding logical Block on the Data Block chain.
+         In an ESDS this should normally be the reversed physical
+         sequence of Blocks (with the exception of an occasional
+         intermittent spacemap Block. Thus the Prefix Block field
+         PFXEDATA points to Block 3, Block 3 points to Block 2,
+         Block 2 points to Block 1, which holds foxes to indicate end
+         of chain. Block 0 is a spacemap Block and does not reside
+         on the Data Block chain.
+         The first four bytes of zeroes are not shown in the table above.
+
+BHDRFRE@ is a three-byte pointer to the available freespace area in the Block.
+         Since records are allocated starting from the end of the Block,
+         the free space area starts after the pointer table's terminating entry.
+         Block 1 holds 5 records, so the pointer table holds 6 entries of 4 bytes
+         each. Freespace starts at 40 + 24 = 64 or X'40'.
+         Block 2 holds 6 records, so the pointer table holds 7 entries of 4 bytes
+         each. Freespace starts at 40 + 28 = 68 or X'44'.
+         Block 3 holds 1 record, so the pointer table holds 2 entries of 4 bytes
+         each. Freespace starts at 40 + 8 = 48 or X'30'.
+
+BHDRFREE is a three-byte field holding the amount of available freespace in the Block.
+         On Block 1 the freespace starts at offset 64 and the last record allocated
+         starts at offset 620, leaving a free space of 620 - 64 = 556 or X'22C' bytes.
+         On Block 2 the freespace starts at offset 68 and the last record allocated
+         starts at offset 86, leaving a free space of 86 - 68 = 18 or X'12' bytes.
+         On Block 3 the freespace starts at offset 48 and the only record allocated
+         starts at offset 3344, leaving a free space of 3344 - 48 = 3296 or X'CE0' bytes.
+
+--       The last two bytes of the header are unassigned and contain zeroes.
+
+RPTRTBL  indicates the start of the pointer table.
+
+RPTRTBL[0]
+RPTRFLGS flags of first pointer. X'00' indicates a normal record pointer. 
+RPTRREC@ pointer to first record's RDW on the Block.
+         The first record is allocated 690 bytes (the record's length, plus 4 bytes
+         for the record's RDW) down from the start of the Block Footer.
+         4096 - 4 - 690 = 3402 or X'D4A'.
+         On Block 2, the first record is 686 bytes long, so is allocated 690 bytes
+         down from the Footer. 4092 - 690 = 3402 or X'D4A'
+         On Block 3, the first record is 744 bytes long, so is allocated 748 bytes
+         down from the Footer. 4092 - 748 = 3344 or X'D10'
+
+RPTRTBL[1]
+RPTRFLGS flags of second pointer. X'00' indicates a normal record pointer.
+RPTRREC@ pointer to second record's RDW on the Block.
+         The second record is 695 bytes long, so it is allocated 699 bytes
+         down from the preceding record. 3402 - 699 = 2703 or X'A8F'.
+         On Block 2, the second record is 648 bytes long, so is allocated 652 bytes
+         down from the preceding record. 3402 - 652 = 2750 or X'ABE'
+         In Block 3 the value will be foxes to indicate the termination entry.
+
+RPTRTBL[2] (Blocks 1 and 2 only, absent from Block 3)
+         On Block 3 the third record has not yet been created, so here the
+         value will be X'FF' = termination entry.
+RPTRFLGS flags of third pointer. X'00' indicates a normal record pointer.
+RPTRREC@ pointer to third record's RDW on the Block.
+         The third record is 712 bytes long, so it is allocated 716 bytes down
+         from the preceding record. 2703 - 686 = 1987 or X'7C3'.
+         On Block 2, the third record is 655 bytes long, so is allocated 659 bytes
+         down from the preceding record. 2750 - 659 = 2091 or X'82B'
+
+RPTRTBL[3] (Blocks 1 and 2 only, absent from Block 3)
+RPTRFLGS flags of fourth pointer. X'00' indicates a normal record pointer.
+RPTRREC@ pointer to fourth record's RDW on the Block.
+         The fourth record is 677 bytes long, so it is allocated 681 bytes down
+         from the preceding record. 1987 - 681 = 1306 or X'51A'.
+         On Block 2, the fourth record is 689 bytes long, so is allocated 693 bytes
+         down from the preceding record. 2091 - 693 = 1398 or X'576'
+
+RPTRTBL[4] (Blocks 1 and 2 only, absent from Block 3)
+RPTRFLGS flags of fifth pointer. X'00' indicates a normal record pointer.
+RPTRREC@ pointer to fifth record's RDW on the Block.
+         The fifth record is 682 bytes long, so it is allocated 686 bytes down
+         from the preceding record. 1306 - 686 = 620 or X'26C'.
+         On Block 2, the fifth record is 649 bytes long, so is allocated 653 bytes
+         down from the preceding record. 1398 - 653 = 745 or X'2E9'
+
+RPTRTBL[5] (Blocks 1 and 2 only, absent from Block 3)
+RPTRFLGS termination entry for table of record pointers. Value X'FF'
+RPTRREC@ For Block 1, the next record is 686 bytes long, yet the Block has
+         only 620 - 52 = 568 bytes of free space availalble. Therefore entry 5
+         in the pointers table is the termination entry with value X'FFFFFF'
+         On Block 2, the sixth record is 655 bytes long, so is allocated 659 bytes
+         down from the preceding record. 745 - 659 = 86 or X'56'
+
+RPTRTBL[6] (Block 2 only, absent from Blocks 1 and 3)
+RPTRFLGS termination entry for table of record pointers. Value X'FF'
+RPTRREC@ For Block 2, the the remaining freespace is less than required for the
+         next record, so the table is terminated with an entry containing foxes.
+
+--       The freespace area varies both in starting location and in length.
+         The details are outlined above.
+
+data[4]  fifth record, present on Blocks 1 and 2, not on Block 3
+data[3]  fourth record, present on Blocks 1 and 2, not on Block 3
+data[2]  third record, present on Blocks 1 and 2, not on Block 3
+data[1]  second record, present on Blocks 1, 2, and 3
+data[0]  first record, present on Blocks 1, 2, and 3
+
+BFTREYE  is an EYE-catcher to identlfy the end of the Block.
+         It's value is always the characters 'FTR'
+
+BFTRSEQ# is a one-byte sequence number, incremented each time the Block
+         is written. When the counter reaches 256 it wraps back to zero.
+         It is kept in sync with BHDRSEQ#. Whenever they are not equal,
+         the Block has not been written completely and will be regarded
+         as damaged.
+
+===================================================
+
+--> Open
+
+When the dataset is opened, the Prefix Block is read and validated.
+The validations are described in the zVSAM_design document.
+
+===================================================
+
+--> Get (sequential)
+
+When getting a record, the RPL holds the XLRA of the last record retrieved.
+From the RPL's last XLRA the next RPTRTBL entry is located.
+If the RPTRTBL entry is not a termination entry, the pointer is used
+to retrieve the record and the record is returned to the application.
+
+If a termination entry is encountered instead, then the Block's BHDRNEXT
+pointer is used to access the next Block in the list of Data Blocks and the
+first entry on that Block's pointer table is used to retrieve the next record.
+
+--> Get (backward)
+
+When getting a record, the RPL holds the XLRA of the last record retrieved.
+From the RPL's last XLRA the preceding RPTRTBL entry is located if the XLRA has
+a XLRAREC other than 0. If the XLRAREC is 0, the Block's BHDRPREV pointer is
+used to access the preceding Block. Subsequently, that Block's BHDR#REC is used to
+access the last logical record in that Block.
+Either way, the record retrieved is returned to the application.
+
+--> Get (random)
+
+Do we need to support this? (**!!)
+
+===================================================
+
+--> Put (add new record)
+
+The last Block on the chain of Data Blocks is accessed,
+using the Prefix Block's PFXEDATA pointer.
+If the Block is already in a buffer this step can be skipped.
+
+A new record entry is allocated from the free-space area
+and a new record pointer overwrites the existing termination
+entry. A new termination entry is added to the table of record
+pointers.
+
+The Header is updated to reflect the decrease in free space:
+BHDRFRE@ is incremented by 4 (the length of the new pointer table entry)
+and BHDRFREE is decremented by the record length and the pointer table 
+entry length.
+
+If insufficient free space is available for allocating the new 
+record, then a new Block is added to the end of the Data Block
+chain. The full Block's BHDRNEXT pointer will be adjusted to point to
+the new Block, the new Block's BHDRPREV will be set to point to the full
+block, and the Prefix Block's PFXEDATA pointer will be set to point to the
+new Block.
+The remaining fields in the new Block's Header and Footer will be initialized,
+and the first entry in the record pointer list will be created, followed
+by a termination entry. The record can then be allocated right before the
+Footer area of the Block.
+
+The Spacemap Block covering the old Block will be updated to reflect the
+Data Block being full. The spacemap Block covering the new Block (normally the
+same Spacemap Block, but might be the next Spacemap Block) will be updated
+to reflect that this Block is in use and partially filled.
+
+--> Put (update existing record)
+
+Case 1: length does not change
+        The record in the Block is overwritten.
+        No other changes are needed.
+
+Case 2: length decreases
+        The record is reallocated so that it still ends at the same address.
+        Thus, its RDW will move up by the number of bytes the record has been
+        shortened. The pointer in the pointer table is adjusted accordingly.
+        Subsequently, all records allocated to a lower address than the
+        updated record are moved up by the same number of bytes and their
+        pointers are updated accordingly. Finally, the amount of free space
+        is incremented by the number of bytes the record has been shortened.
+
+Case 3: length increases, enough freespace is available.
+        The old record is removed from the Block by moving all records residing
+        at a lower offset than the record to be updated up by the old length of the
+        record. Their record pointers are adjusted accordingly.
+        The new version of the updated record is allocated from the enlarged
+        freespace in the Block and its pointer adjusted to match its new location.
+        The amount of freespace in BHDRFREE is decreased accordingly.
+        Mark that the pointer to the record is not reallocated: it retains
+        its position in the table of record pointers, thus its XLRA does not change.
+
+Case 4: length increases, not enough freespace is available.
+        Since the page does not have enough freespace to accomodate the new
+        record, it will have to be stored in a different Block. But its XLRA is
+        fixed until the next reload, and must remain valid to enable sequential
+        access. Therefore the updated record is written at the end of the file,
+        as if it were a new record. We call this a moved record.
+        Its RPTRFLGS field is set to indicate it is a moved record.
+        The old record is shrunk to 8 bytes, conforming to case 2 above.
+        It is updated to contain the moved record's new XLRA.
+        The updated old record (with the original XLRA) is called a displacement
+        record. The displacement record is stored without a RDW; it's always
+        8 bytes long. Its RPTRFLGS entry is updated to indicate that the record
+        has been displaced off the Block.
+        In the rare case where the old record is less than 8 bytes and therefore
+        needs to be lengthened to 8 bytes, if enough freespace is available,
+        that's no problem. If, however, not enough freespace is available
+        then another record will be moved off the Block as well.
+        It is impossible to create a situation where moving a longer record
+        off the Block will not create enough room to hold both displaced records:
+        A max of 256 displacement records occupies only 2K of storage.
+        With a minimum Block size of 4K there is ample room to displace
+        (extreme case) all records on the Block. Hence.
+        
+        A moved record is prefixed with an 8-byte XLRA that points back to
+        the displacement record. Thus, should the moved record need to be
+        displaced again, the moved record can be erased entirely and the
+        displaced record can be updated to point to the new moved record's
+        location.
+
+        Alternatively, we might split the Block when it overflows.
+        However, this would mean we'd be wasting nearly an entire Block
+        of space. Since it's an ESDS, no new records will ever be allocated
+        to either of the two resulting Blocks, while their joint content will
+        be just over 1 Block's worth of data.
+        In a Block-split scenario we're also facing issues as a result of
+        changing teh XLRAs of all records moving from the full Block to
+        its newly allocated sibling Block. Updating any and all AIXes,
+        if they are defined over the ESDS cluster, comes to mind.
+
+===================================================
+
+--> Erase
+
+Erase is not supported for ESDS datasetets.
+
+To remove unneeded records, the dataset needs to be unloaded,
+then reloaded with relevant data records only.
+
+===================================================
+
+--> Point
+
+A point will set the indicated XLRA current. A subsequent sequential
+read will return the the record with the indicated XLRA.
+

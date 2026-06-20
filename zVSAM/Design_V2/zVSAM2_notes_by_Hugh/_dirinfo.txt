@@ -1,0 +1,6 @@
+I created this directory (Dev/zVSAM) on 2017-02-11. It is to contain all product code for the zVSAM upgrade to z390. It may also contain tools.
+
+It should appear in the source path for javac ahead of the Dev/zB11/src directory.
+It should appear in the CLASSPATH ahead of the Dev/z/z390/jar for execution.
+
+I may need to create src and classes (or z390.jar) directories in here too to simplify processing.

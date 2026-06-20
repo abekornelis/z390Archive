@@ -1,0 +1,23 @@
+zVSAM compiling
+
+need to compile *.java rather than individual classes;
+
+so, need a target directory to hold all classes (rather than backport  mine to the disrtibution directory)
+
+
+Assuming we are in Dev/,
+all in all, best to have 
+sourcepath
+  zVSAM/src:../zB11/src
+
+and 
+classpath
+  zVSAM/classes:../z/z390.jar
+
+though the latter might need tweaking. Should zVSAM/classes really be a jar? Remains to be seen.
+
+
+
+
+zVSAM executing
+  presumably the same classpath as for compiling.

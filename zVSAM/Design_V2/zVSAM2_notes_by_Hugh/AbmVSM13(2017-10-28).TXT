@@ -1,0 +1,999 @@
+zVSAM - proposal for new implementation
+=======================================
+
+VSAM: IBM vs z390
+=================
+IBM perspective...
+        F   V   FS  VS  AIX
+   ESDS Yes No  Yes No  Yes
+   KSDS Yes Yes Yes Yes Yes
+   RRDS Yes Yes No  No  No
+
+zVSAM perspective...
+        F   V   FS  VS  AIX
+   ESDS Yes Yes Yes Yes Yes
+   KSDS Yes Yes Yes Yes Yes
+   RRDS Yes Yes Yes Yes No
+
+In addition to the above:
+   IBM restricts the location of any base or AIX keys to the first or
+   only CI. zVSAM will allow the base or AIX keys to be anywhere within
+   the record
+
+   For variable records all base and AIX keys must exist within every
+   record. Any attempt to shorten a record which harms a base or AIX
+   key will raise an error
+
+   IBM/zVSAM do not support non-unique or variable length base keys
+
+   An AIX with non-unique keys will become a variable spanned KSDS
+
+   IBM does not allow read backwards of an ESDS...zVSAM will do
+
+   Key compression is not currently supported in zVSAM
+
+   Support of LDS may be a future extension, no further design options
+   are documented here
+
+Terminology
+===========
+Foxes: Denotes a field of all high-values (all X'FF')
+Nulls: Denotes a field of all low-values (all X'00')
+Spanned: A record may be split between blocks, if it is split
+then an SDW will indicate where the next segment is
+Segment: A portion of a record in a spanned dataset
+RDW: Record Descriptor Word
+     A four byte field of LL,X'0000'
+     LL=length of following variable record including the RDW
+RDF: Record Definition Field
+     A four byte field of LLLL
+     LLLL=length of following variable record including the RDF
+     This is used for non-unique AIXs when the RDW is likely to be
+     inadequate
+RBA: Relative Byte Address
+     A means of directly addressing a record in an ESDS
+     Stored as 8 bytes(XRBA) but can be accessed with 4(RBA)
+RRN: Relative Record Number
+     A means of directly addressing a record in an RRDS to a
+     maximum of 4G records
+XLRA: Extended Logical Record Address
+     Two forms exist:
+     The block pointer is used to chain blocks together and consists
+     of a 7-byte block number followed by X'00'
+
+     The record pointer is used to refer to a specific record within
+     a block, a 7-byte block number followed by a record number
+     Record numbers range from X'01' through X'FF', therefore a
+     maximum number of 255 records can be allocated to each block
+
+Issues with current implementation
+==================================
+1) No objects, all code uses a single large program with subroutines
+   relying on shared variables rather than parameters for communication
+2) AIX cannot be read as a KSDS, it can be used only to access data in
+   the base KSDS. Some programs read the AIX without needing access to
+   the full records in the ESDS/KSDS
+3) No spanned support
+4) Update not fully implemented and no System level ENQ/DEQ for locking
+5) No support for AIX with non-unique keys
+
+API for assembler and Cobol programs
+====================================
+1) The RPL is the primary interface for record operations
+   The ACB is the primary interface for file operations
+   Each cluster or file is represented by an ACB
+
+   A program can use multiple RPLs, an RPL must always point to an open
+   ACB in order to specify a valid operation
+
+   We'll define Java Objects to mimic the RPL and ACB used in the z390
+   executable code
+
+   Whenever the execution module of z390 (pz390) encounters the zVSAM
+   SVC 121 (X'79'), we'll copy the RPL and/or ACB from the z390 emulated
+   storage to construct a Java RPL and/or ACB Object, then apply the
+   Execute method to the RPL. No other methods will be exposed
+
+2) Internally we'll have a method for each operation defined in the RPL:
+   - ACB.Open    (z390 implements this as an RPL-based operation)
+   - ACB.Close   (z390 implements this as an RPL-based operation)
+   - RPL.Get
+   - RPL.Put
+   - RPL.Erase
+   - RPL.Point
+   - RPL.EndReq
+   - Support for other RPL-based requests are reserved for a future
+     release
+
+Implementation layers
+=====================
+1) Catalog management. This is where all meta-data about the VSAM
+   components are kept and where the relations between VSAM components
+   are defined
+
+   The current implementation uses a pre-compiled data-only load module
+   as a catalog. This design is not currently under review
+   The catalog should at least be able to hold:
+   - file name
+   - pointers to all related AIX clusters
+   - LRECL
+   - record type (F, V, FS, VS)
+   - type of component (ESDS, KSDS, RRDS, AIX)
+   - freespace percentage (during load) within blocks
+   - freespace percentage (during load) for empty blocks
+   - Physical block size (aka CI-size, 512 up to 1MB)
+
+   The full implementation of catalog parameters will be in another
+   document
+
+2) The logical layer that will handle one record at a time
+   We can Get, Put, Erase or Point
+
+   A component is defined to hold either fixed length or variable
+   length records. Both types can be implemented as either spanned
+   or non-spanned
+
+3) The physical level that will handle the storage and retrieval of
+   data in one or more files on disk
+
+   All I/O is initiated at this level. Each I/O will be in terms of one
+   or more blocks
+
+   All space in each zVSAM component is allocated in blocks
+   The size of a block can differ between zVSAM components
+
+   The minimum block size allowed is 512 bytes
+   Within a component all blocks are the same size, with the exception
+   of the Prefix block, which is always 4K
+
+   The following types of VSAM datasets will be supported:
+   - ESDS
+   - KSDS
+   - RRDS
+   - AIX (on ESDS)
+   - AIX (on KSDS)
+
+Catalog management will not be part of this project, except we'll
+create all required support within the framework of the currently
+supported static, assembled, catalogs
+
+Locking also is a project in its own right. Therefore, in the first
+release(s), there will be limited support for locking but it is our
+intent to provide System ENQ/DEQ in the early stages of development
+
+RLS will not be supported and it will be the user's responsibility to
+prevent independent processes from accessing the same dataset at the
+same time
+
+Physical structure - General
+============================
+A zVSAM file consists of blocks from 512 bytes
+
+Each block can be designated as one of the following:
+- PFX: file prefix block
+- MAP: spacemap blocks
+- DTA: record or segment blocks
+- IDX: index data
+
+The PFX block precedes each file (is located at physical offset 0) but
+counts as block number -1. This block is not addressable through any
+application interface. It contains only control information and
+supplements the catalog by providing a location to keep zVSAM internal
+data that is more volatile than the current catalog can accommodate
+It is always 4K
+After the PFX block, block numbers start at zero
+
+The DTA blocks contain the records. These are formatted according to
+the rules outlined in this document. The records can be either fixed
+or variable length and they can be either spanned or non-spanned
+DTA blocks can have freespace reserved and can be adjusted to fit fixed
+non-spanned records more efficiently
+
+IDX blocks contain index data. An IDX block contains unique entries for
+all VSAM record types
+For KSDS, the base dataset is accessible by key via the index
+For ESDS and RRDS, the index is only used to speed up access to the
+base dataset when a specific RBA(ESDS) or RRN(RRDS) is requested
+IDX blocks can have freespace reserved and can be adjusted to fit fixed
+non-spanned records more efficiently
+
+An AIX, however, may contain an index of non-unique values in the base
+component. More on this in the section on AIX support
+
+MAP blocks define the status of each DTA or IDX block created and serve
+to find an available block quickly when a block needs to be split or
+when an additional block is needed for any other purpose
+MAP blocks do not have freespace but may be subject to adjustment in
+line with DTA/IDX blocks
+
+Physical structure - Detail
+===========================
+1) Headers
+Each block has a header and a footer
+These are formatted as follows:
+*
+* zVSAM HEADER BLOCK
+*
+ZVSAMHDR DSECT
+BHDREYE  DS    CL3                HDR
+BHDRSEQ# DS    X                  Write control value
+BHDRVER  DS    X                  Design sequence number
+BHDR_V1  EQU   X'01'              - Version 1 (this version)
+BHDRFLGS DS    X                  Flags to indicate Block type
+BHDR_PFX EQU   X'80'              - Prefix Block
+BHDR_MAP EQU   X'40'              - Spacemap Block
+BHDR_DTA EQU   X'20'              - Data Block
+BHDR_IDX EQU   X'10'              - Index Block
+BHDR_SEG EQU   X'08'              - Segment Block
+BHDR#REC DS    X                  No. of records in this Block
+BHDRXLVL DS    X                  Index level. 0 for Leaf Block
+BHDRSELF DS    XL8                XLRA pointer to self
+BHDRNEXT DS    XL8                XLRA pointer to next sequential block
+BHDRPREV DS    XL8                XLRA pointer to prev sequential block
+BHDRFRE@ DS    XL3                Offset to free space area
+BHDRFREE DS    XL3                Remaining free space in Block
+
+BHDRSELF, BHDRNEXT and BHDRPREV are block pointers
+BHDRSELF is to double-check the file has not been damaged
+BHDRNEXT and BHDRPREV facilitate sequential access
+
+These pointers chain the blocks in sequence to facilitate browsing
+forward or backward.
+
+The BHDRPREV pointer of the first block and the BHDRNEXT pointer of
+the last block will contain foxes to indicate end-of-chain
+
+BHDRSEQ# and BFTRSEQ# are used to verify the validity of the block
+In both header and footer the value is incremented before every write
+of the block. From X'FF' the increment will wrap back to X'00'. If a
+read detects a difference, we'll know the block has been damaged
+
+Currently, we allocate no space to a block hash or write timestamp
+This is done to save space and processing time. Might be an option for
+a future version though
+
+BHDRVER is used to indicate the physical block format
+If future versions of z390 implement a different format, it will be
+used to maintain compatability
+
+BHDRFLGS contains the block type. If additional flags are required,
+they can be added
+
+BHDR#REC contains the number of records (or record segments) allocated
+in this block
+
+2) File Prefix block
+The PFX block precedes each file (is located at physical offset 0)
+but counts as block pointer -1. Thus, Prefix blocks are not logically
+addressable. It holds control information on the file and its contents
+
+Prefix blocks have a normal block Header and Footer with BHDRSELF,
+BHDRNEXT and BHDRPREV containing foxes
+The Prefix block is always 4K in size, irrespective of the size of the
+other blocks in the file
+
+This is formatted as follows:
+*
+* zVSAM PREFIX BLOCK...FOLLOWS ZVSAMHDR
+*
+ZVSAMPFX DSECT
+PFXDVOL@ DS    XL3                offset to the data volume label(n/a)
+PFXDNAM@ DS    XL3                offset to the data filename
+PFXDPAT@ DS    XL3                offset to the data pathname
+PFXXVOL@ DS    XL3                offset to the index volume label(n/a)
+PFXXNAM@ DS    XL3                offset to the index filename
+PFXXPAT@ DS    XL3                offset to the index pathname
+         DS    X                  reserved
+PFXALTHR DS    X                  allocation redrive threshold
+PFXBLKSZ DS    XL4                actual Blocksize used for all Blocks
+*                                 except Prefix Block
+PFXHXLRA DS    XL8                XLRA of highest allocated block
+PFXBMAP  DS    XL8                XLRA of first spacemap block
+PFXEMAP  DS    XL8                XLRA of last spacemap block
+PFXMAPNW DS    XL8                XLRA of spacemap block last used for
+*                                 allocation
+PFXBDATA DS    XL8                XLRA of first data or index block
+PFXEDATA DS    XL8                XLRA of last data or index block
+PFXBSEGM DS    XL8                XLRA of first Segment block
+PFXESEGM DS    XL8                XLRA of last Segment block
+PFXROOT  DS    XL8                XLRA of root index block
+PFXBLVL0 DS    XL8                XLRA of Header Block index level 0
+PFXELVL0 DS    XL8                XLRA of End Block index level 0
+PFXBLVL1 DS    XL8                XLRA of Header Block index level 1
+PFXELVL1 DS    XL8                XLRA of End Block index level 1
+PFXBLVL2 DS    XL8                XLRA of Header Block index level 2
+PFXELVL2 DS    XL8                XLRA of End Block index level 2
+PFXBLVL3 DS    XL8                XLRA of Header Block index level 3
+PFXELVL3 DS    XL8                XLRA of End Block index level 3
+PFXBLVL4 DS    XL8                XLRA of Header Block index level 4
+PFXELVL4 DS    XL8                XLRA of End Block index level 4
+PFXBLVL5 DS    XL8                XLRA of Header Block index level 5
+PFXELVL5 DS    XL8                XLRA of End Block index level 5
+PFXBLVL6 DS    XL8                XLRA of Header Block index level 6
+PFXELVL6 DS    XL8                XLRA of End Block index level 6
+PFXBLVL7 DS    XL8                XLRA of Header Block index level 7
+PFXELVL7 DS    XL8                XLRA of End Block index level 7
+PFXBLVL8 DS    XL8                XLRA of Header Block index level 8
+PFXELVL8 DS    XL8                XLRA of End Block index level 8
+PFXBLVL9 DS    XL8                XLRA of Header Block index level 9
+PFXELVL9 DS    XL8                XLRA of End Block index level 9
+PFXBLVLA DS    XL8                XLRA of Header Block index level 10
+PFXELVLA DS    XL8                XLRA of End Block index level 10
+PFXBLVLB DS    XL8                XLRA of Header Block index level 11
+PFXELVLB DS    XL8                XLRA of End Block index level 11
+PFXBLVLC DS    XL8                XLRA of Header Block index level 12
+PFXELVLC DS    XL8                XLRA of End Block index level 12
+PFXBLVLD DS    XL8                XLRA of Header Block index level 13
+PFXELVLD DS    XL8                XLRA of End Block index level 13
+PFXBLVLE DS    XL8                XLRA of Header Block index level 14
+PFXELVLE DS    XL8                XLRA of End Block index level 14
+PFXBLVLF DS    XL8                XLRA of Header Block index level 15
+PFXELVLF DS    XL8                XLRA of End Block index level 15
+PFXMAPOF DS    XL3                offset within spacemap block to last
+*                                 used byte for allocation
+PFXMAPDT DS    XL4                unsigned packed date YYYYMMDD of last
+*                                 allocation action
+PFXFRSPC DS    X                  initial freespace % within block
+PFXFRBLK DS    XL2                initial freespace blocks
+PFXFRINT DS    XL2                Initial freespace interval between
+*                                 free blocks
+PFXFFLGS DS    X                  file flags
+PFX_ESDS EQU   X'80'                 ESDS
+PFX_KSDS EQU   X'40'                 KSDS
+PFX_RRDS EQU   X'20'                 RRDS
+PFX_LDS  EQU   X'10'                 LDS
+PFX_AIX  EQU   X'08'                 AIX
+PFX_INDX EQU   X'01'                 index component
+PFXRFLGS DS    X                  record flags
+PFX_RFIX EQU   X'80'                 1=fixed       0=variable
+PFX_RSPN EQU   X'40'                 1=spanned     0=non-spanned
+PFX_KUNQ EQU   X'20'                 1=AIX unique  0=AIX non-unique
+PFX_AIXT EQU   X'10'                 1=AIX on KSDS 0=AIX on ESDS
+PFXRCLEN DS    XL4                record length, max length if variable
+PFXKYLEN DS    XL4                key length
+PFXKYOFF DS    XL4                key offset, excluding SDW/RDW
+
+PFXDVOL@ PFXDNAM@ and PFXDPAT@...
+   Points to halfword-prefixed strings holding the volume label, name
+   and path of the file holding the data component. All three strings
+   are preceded by a halfword-length field. These fields are intended to
+   be used to validate the usability of the data file upon open
+   PFXDVOL@ contains foxes if the volume label is unknown
+PFXXVOL@ PFXXNAM@ and PFXXPAT@...
+   Points to halfword-prefixed strings holding the volume label, name
+   and path of the file holding the index component. All three strings
+   are preceded by a halfword-length field. These fields are intended to
+   be used to validate the usability of the index file upon open
+   PFXXVOL@ contains foxes if the volume label is unknown
+PFXALTHR...
+   Contains a number from 0 to 100 indicating the percentage of free
+   entries in non-last spacemap blocks that triggers the allocation
+   process to start reusing available blocks, rather than adding new
+   blocks at the end of the file
+PFXBLKSZ...
+   Actual blocksize for this file. Applies to all blocks, except the
+   prefix block which is 4096 bytes by design
+   Derived from VCLRDBS/VCLRIBS/VAIXDBS/VAIXIBS and then subject to
+   adjustment
+PFXHXLRA...
+   Anchor point of the last allocated block in the file
+PFXBMAP/PFXEMAP...
+   First and last anchor points for the chain of spacemap blocks
+PFXMAPNW...
+   Anchor point of last spacemap block
+PFXBDATA/PFXEDATA
+   First and last anchor points for the chain of data or index blocks
+PFXBSEGM/PFXESEGM...
+   First and last anchor points for the chain of segment blocks
+   Valid only for spanned records, foxes for all other types
+   Segment blocks will never be encountered during chaining through
+   data/index blocks
+   A spanned record starts in the data/index block and is prefixed
+   by an SDW. It is the SDW that provides access to the remaining
+   segments
+PFXROOT...
+   For indexes only
+   Anchor to the highest level index block
+PFXBLVL0/PFXELVL0...
+   For indexes only
+   First and last anchor points for the chain of index primary level
+   blocks. For an index that consists of a single block, both fields are
+   equal to PFXROOT
+PFXBLVL1-F/PFXELVL1-F...
+   For indexes only
+   First and last anchor points for the chain of index non-primary level
+   blocks
+PFXMAPOF...
+   Holds an offset value within the last spacemap block (anchored from
+   PFXMAPNW)
+PFXMAPDT...
+   Date of last block allocation action. Format is X'YYYYMMDD'
+PFXFRSPC...
+   A number from 0 to 99 inclusive indicating a percentage
+   This defines how much of a block we would like to have available as
+   free space after initial load. During block splits we try to honour
+   this freespace percentage as well. A percentage that leaves
+   insufficient room to allocate a single record will be honoured to the
+   extent that one record will be allocated to each block
+   Derived from VCLRDFS/VCLRIFS/VAIXDFS/VAIXIFS
+PFXFRBLK...
+   Number of empty blocks to allocate during initial load after each
+   interval (PFXFRINT) of non-empty blocks. Only valid for KSDS
+   Derived from VCLRDFB/VCLRIFB/VAIXDFB/VAIXIFB
+PFXFRINT...
+   Number of contiguous blocks allocated during initial load before
+   inserting PFXFRBLK empty blocks. Only valid for KSDS
+   Derived from VCLRDNB/VCLRINB/VAIXDNB/VAIXINB
+PFXFFLGS...
+   Flags indicating file type
+   Derived from VCLRFLG1
+PFXRFLGS...
+   Flags indicating record and key type
+   Derived from VCLRFLG1 and VAIXFLG1
+PFXRCLEN...
+   Length of logical record if fixed-length
+   Max length of logical record if variable-length
+   Derived from VCLRLMAX
+PFXKYLEN...
+   Length of key for KSDS/AIX
+   Derived from VCLRKLEN/VAIXKLEN
+PFXKYOFF...
+   Offset within the record (without SDW/RDW) of the key field
+   KSDS/AIX only
+   Derived from VCLRKOFF/VAIXKOFF
+
+When a file is opened by zVSAM the Prefix block's contents are used to
+validate the file as follows:
+---The header and footer of the prefix block must pass all usual
+   validity checks
+---The PFXDVOL, PFXDPAT and PFXDNAM should match the volume, path and
+   name of the file being opened if it is a data file
+---The PFXXVOL, PFXXPAT and PFXXNAM should match the volume, path and
+   name of the file being opened if it is an index file
+   Index file being opened should refer to the correct data file
+   that's already been opened for use with this index file
+---PFXALTHR must be 0
+---PFXBLKSZ matches the catalog entry for this file
+---PFXHXLRA must match the file's size according to the operating system,
+   taking block size and prefix block into account
+---PFXBMAP  is a valid block that is marked as a spacemap block
+---PFXEMAP  is a valid block that is marked as a spacemap block
+---PFXMAPNW is a valid block that is marked as a spacemap block
+---PFXBDATA is a valid block that is marked as a data/index block
+---PFXEDATA is a valid block that is marked as a data/index block
+---PFXBSEGM must be foxes or point to a valid block that is marked as a
+            segment block
+---PFXESEGM must be foxes or point to a valid block that is marked as a
+            segment block
+---PFXROOT  is foxes for a data/segment block
+            is a valid block for an index block
+---PFXBLVL0/PFXELVL0 are foxes for a data/segment block
+            are valid blocks for an index block
+---PFXBLVL1-F/PFXELVL1-F are foxes for a data/segment block
+            are valid blocks for an index block or foxes
+---PFXMAPOF is a valid offset in the spacemap block pointed to by PFXMAPNW
+---PFXMAPDT has a valid date between 20150101 and the date of opening
+---PFXFRSPC has a value between 0 and 99
+---PFXFRBLK has a value between 0 and 65535
+---PFXFRINT has a value between 0 and 65535
+---PFXFFLGS matches the catalog entry for this file
+---PFXRFLGS matches the catalog entry for this file
+---PFXRCLEN matches the catalog entry for this file
+---PFXKYLEN matches the catalog entry for this file
+---PFXKYOFF matches the catalog entry for this file
+
+In Data or Index blocks after the BHDR area a table of record pointers
+is maintained
+It contains BHDR#REC pointers, one for each record in the block
+
+The format of these pointers is as follows:
+ZVSAMRPT DSECT
+RPTRFLGS DS    X                  FLAGS
+RPTR_ACT EQU   X'80'                 ACTIVE RECORD
+RPTR_MTY EQU   X'40'                 INACTIVE RECORD
+RPTR_DIS EQU   X'20'                 RECORD DISPLACED TO ANOTHER BLOCK
+RPTR_MOV EQU   X'10'                 NEW LOCATION OF MOVED RECORD
+RPTR_SEG EQU   X'08'                 SEGMENT
+RPTR_END EQU   X'01'                 TERMINATING ENTRY
+RPTRREC@ DC    XL3                OFFSET IN THE BLOCK TO THIS RECORD
+*                                 FOXES WHEN RPTR_END SET
+
+As the table of pointers is built forwards and the record data is built
+backwards from the end, any free space will be a in single block
+The RPTR pointers are terminated by RPTR_END and RPTRREC@=foxes
+
+Records can be rearranged in the block at any time. Their sequence is
+not defined by their position in the block: the record pointers in the
+RPTR define the logical sequence of the records in the block
+
+RPTR_ACT: the record pointer points to a valid record
+RPTR_MTY: the record pointer points to an empty slot (RRDS)
+RPTR_SEG: the record pointer points to an SDW, followed by the record
+          segment. RPTR_ACT will also be set
+
+   Fixed and empty slots set RPTR_MTY and point to a record of nulls
+   Variable and empty slots set RPTR_MTY and point to a null RDW
+   (X'00040000')
+
+The end of the block is the Footer, which is formatted as follows:
+ZVSAMFTR DSECT
+BFTREYE  DS    CL3                FTR
+BFTRSEQ# DS    X                  Write sequence number
+
+Validations performed when reading a block
+==========================================
+All blocks have a Header and a Footer which we will use to validate
+the block on every read:
+- the eye-catchers in Header and Footer are checked:
+  BHDREYE = 'HDR' and BFTREYE = 'FTR'
+- the write control values in Header and Footer are compared:
+  BHDRSEQ# = BFTRSEQ#
+- The design version number is checked:
+  BHDRVER = 1 (or any other supported version number)
+- The pointer to self is checked:
+  BHDRSELF = 7-byte XLRA of current block, X'00' appended
+- The Header's flag byte is checked for the expected type of block
+  BHDRFLGS logically anded with BHDR_DATA = True
+- The validity of the record pointer table is checked by calculating
+  the location of the trailer entry and checking it for validity
+- Additionally, when reading a record, the record pointer must have a
+  valid value for RPTRFLGS and an RPTRREC@ value that is beyond the
+  terminating entry of the record pointer table and before the footer
+  area
+- Finally, the record being read may not extend into the footer area
+  of the block
+
+If any of the checks fail, an abend will be issued
+
+Physical structure - Record Structures
+======================================
+Variable-length records are always preceded by a Record Descriptor Word
+Fixed-length records do not have an RDW, whether spanned or not
+Non-unique AIX records (KSDS spanned) can be very large and therefore
+may exceed the capacity of the RDW. For such large records an RDF will
+preceed the record which is a four byte logical length
+
+Notes on RDW:
+   IBM has two formats:
+   1) A halfword containing the length of the record (length of RDW
+      included in the count) followed by a halfword of zeros
+      This is the normal RDW
+
+   2) For the XLRI IBM defines the RDW as a byte of zeros, followed by a
+      three-byte length of the record, length of RDW not included in the
+      tally
+
+   For internal use in zVSAM we'll use the first format only, limiting
+   the record size to RDW+65531 bytes except for non-unique AIX which
+   may have an RDF instead
+
+   Extending the record size will require new RECFM types which will
+   be considered in a future extension
+
+Data and Index blocks are chained from PFXBDATA
+Each block has BHDRSELF for verification and BHDRPREV/BHDRNEXT for
+forward and backward chaining as previously described
+
+For non-spanned each RPTR points to the whole record
+
+Segment blocks are a special type of Data block and are NOT included
+in the chain from PFXBDATA. Segment blocks have BHDR_SEG on
+
+Spanned:
+The SDW (Segment Descriptor Word) is defined as follows:
+ZVSAMSDW DSECT
+SDWSEGCC DS    X                  SEGMENT CONTROL CODE
+SDWSFRST EQU   X'80'              FIRST SEGMENT
+SDWSMIDL EQU   X'40'              MIDDLE SEGMENT
+SDWSLAST EQU   X'20'              LAST SEGMENT
+SDWSRDF  EQU   X'10'              FIRST SEGMENT IS IN RDF FORMAT
+SDWSEGLN DS    XL3                LENGTH OF SEGMENT (INC. SDW/RDW)
+SDWBNEXT DS    XL8                XLRA OF NEXT SEGMENT (BLOCK/RECORD)
+
+In a Data block each RPTR may point to a whole record or a first segment
+The RPTR_SEG bit will be set if it is a first segment and the record
+will be prefixed by an SDW
+The Data block may contain many whole or first segment records
+
+If the whole record cannot fit into the remaining free space then
+the remaining free space is used up to maximum of n bytes (n is
+currently 500, but may be adjusted)
+
+The first segment for a variable file will have the SDW followed by
+the RDW/RDF, and this represents the minimum length (fixed files have
+the SDW as the minimum)
+
+Subsequent segments occupy a special form of Data block called a
+Segment block, BHDR_DTA and BHDR_SEG are set
+Segment blocks are NOT part of the chain anchored from PFXBDATA
+
+SDWBNEXT points to the next segment for this record, it will always
+be in a segment block
+There are two types of segment blocks, middle and last
+A middle segment block will always be full, contains only one record
+(RPTR) and will be prefixed by an SDW pointing to the next segment
+Middle segments are only created if the block can be filled
+Middle segments are never subjected to free space
+
+A record in a last segment block can be shared with other last segments
+in the file, each record will be prefixed by an SDW and SDWBNEXT=foxes
+
+The anchor at PFXBSEGM provides no useful purpose but that and the
+BHDRSELF, BHDRPREV and BHDRNEXT of the segment blocks serve to ensure
+dataset integrity
+
+Physical structure - Access
+===========================
+1) Fixed KSDS
+   Update: In place
+           AIX updates if needed
+   Add   : Records shifted into free space or block is split
+           AIX updates if needed
+   Delete: Space reclaimed
+           AIX updates if needed
+
+2) Fixed RRDS
+   Update: In place
+   Add   : In place, RPTR_MTR replaced with RPTR_ACT
+   Delete: Record marked with RPTR_MTY and cleared
+
+3) Fixed ESDS
+   Update: In place
+           AIX updates if needed
+   Add   : Only to end
+           AIX updates if needed
+   Delete: Application marks record
+           No AIX updates possible
+
+4) Variable KSDS
+   Update: With same length, in place
+           Shortened length, space reclaimed
+           If a shortened length excludes any AIX key an error is
+           raised irrespective of the AIX being on the upgrade set as
+           it would invalidate any AIX being created at a later time
+           Extended length, shifted into free space or block split
+           AIX updates if needed
+   Add   : Records shifted into free space or block is split
+           AIX updates if needed
+   Delete: Space reclaimed
+           AIX updates if needed
+
+5) Variable RRDS
+   Update: With same length, in place
+           Shortened length, space reclaimed
+           Extended length, shifted into free space or block split
+   Add   : Records shifted into free space or block is split
+           RPTR_MTR replaced with RPTR_ACT
+   Delete: Null RDW marked with RPTR_MTY and cleared, space reclaimed
+
+6) Variable ESDS (not supported by IBM)
+   Update: In place
+           The length cannot change, as there is an associated index
+           providing fast access by XRBA, any change in length would
+           affect the XRBA of all following records
+           AIX updates if needed
+   Add   : Only to end
+           AIX updates if needed
+   Delete: Application marks record
+           No AIX updates
+
+7) AIX on KSDS/ESDS
+   Standard access via PATH assumed
+   Browse will locate the requested alternate key
+
+   Unique...
+      READNEXT will get the base record
+      Further READNEXT will get the next alternate key's base record
+      READPREV will get the previous alternate key's base record
+      An error is raised if end or beginning of file is hit
+
+   Non-unique gets complex...
+      READNEXT will get the 1st base record, if there is more than
+      one left DUPKEY is raised
+      Further READNEXTs or READPREVs will get the next base records
+      (yes, READPREV reads forward) until DUPKEY is not raised which
+      indicates there's one more record to get
+
+      But...
+      If Browse has positioned to the 1st base record, then READPREV
+      will get the 1st base record of the previous alternate key
+
+      Also, having read the last base record of the current alternate
+      key, READNEXT will get the 1st base record of the next alternate
+      key and READPREV will get the 1st base record of the previous
+      alternate key
+
+      An error is raised if end or beginning of file is hit
+
+   Programming note:
+      It's not necessary to read the entire non-unique spanned record
+      into storage...it could be megabytes. Each segment has an exact
+      number of base keys/XLRAs and segments can only be read forward
+      It is necessary to save the XLRA of the first segment for access
+      to the next/previous alternate keys as mentioned above
+
+      Additions to an AIX must maintain the dataset in ascending base
+      key/XLRA order
+
+Spanned records are a special form of all the above
+Records are retrieved via PFXBDATA and then through the SDW chain
+Update, Add and Delete generally follow the above procedures with
+the added complexity of handling the segment blocks
+
+Physical structure - Block types
+================================
+Spacemap block
+Spacemap blocks have a normal block Header and Footer
+The area in between is defined as follows:
+
+ZVSAMMAP DSECT
+MAPXLRA  DS    XL8                XLRA of 1st block addressed
+*                                 by this block
+MAPBITS  DS    0B                 Bitstring
+*                                 00=unallocated
+*                                 01=enough space for a small variable
+*                                 10=has available space
+*                                 11=full
+
+The bitstring has 2 bits allocated to each block
+The meanings are as follows:
+00 - block is not allocated
+01 - block is allocated but may have sufficient free space
+     last allocation attempt failed, but a smaller record might fit
+10 - block is allocated and eligible for record allocation
+11 - block is full
+
+Spacemap blocks are always considered full
+The Prefix block, having address -1, is not represented in the Spacemap
+
+The Spacemap is anchored from PFXBMAP
+Each Spacemap block has BHDRSELF for verification and BHDRPREV/BHDRNEXT
+for forward and backward chaining as previously described
+
+If we assume 4K blocks, then the bitstring has c.4000 bytes, which can
+be used to manage 16000 blocks of 4K each. Roughly 64MB
+
+If the file extends beyond that, then we'll add more Spacemap blocks to
+the chain. That's 16 Spacemap blocks per GB. It is expected that an
+additional layer in the Spacemap structure will not be needed
+
+When a Spacemap block needs to be allocated as the result of a block
+overflow, we'll try to satisfy the request from the same Spacemap byte
+as the block that overflows. If that is not possible, we'll use one of
+the adjacent bytes. After that, any byte in the block can be used
+We'll scan the block both ways to locate the nearest available block
+If that fails, we'll go straight to the last block, using the PFXEMAP
+pointer from the Prefix block. This should be faster than searching
+additional Spacemap blocks for an available block, although at the
+expense of leaving more holes in the file
+**-->Which may be good to leave some free space for future block
+allocations, or it may be bad from a space conservation point of view
+
+When an allocation request is satisfied, the Prefix block is updated
+to indicate the block and offset involved. Also the date is set
+Whenever the file is opened for update, the date is checked. If the
+date does not match the current date, the Spacemap blocks are
+scanned. If any block contains more than PFXALTHR percent available
+blocks, the PFXMAPNW and PFXMAPOF will be reset. The date in PFXMAPDT
+is adjusted, whether the other fields are reset or not. Thus, only the
+first open-for-update will perform this check. If the pointers are
+reset, any subsequent allocation request will be honored from freed
+blocks
+
+When a file is extended and the end of the last Spacemap block is
+reached, the first Spacemap block is checked for available blocks
+If the threshold specified in PFXALTHR is reached, then the allocation
+pointers will be reset too
+
+Data block
+----------
+Data blocks have a normal Header and Footer
+The remainder of the block is divided into two areas:
+   A table of offsets (RPTR's), and an area that holds the record data
+
+Each RPTR points as follows:
+   If RPTR_ACT is set and not RPTR_SEG, points to a valid record
+      This may start with an RDW if variable or the first data byte
+   If RPTR_MTY is set, points to an RRDS empty slot
+   If RPTR_ACT and RPTR_SEG are set, points to an SDW
+      This may be followed by an RDW/RDF if variable
+
+Apart from RRDS datasets, if the empty bit (RPTR_MTY) is on, this
+indicates a logically deleted record is addressed by this pointer
+Apart from this, such a pointer is no different than the others: it
+still points to the record that was logically deleted. This way we can
+logically delete a record without having to move record data around on
+the block to keep the freespace contiguous. Freespace consolidation
+will occur only when there is not enough room to satisfy a request
+
+Index block
+-----------
+All types of datasets are indexed
+Index blocks have the same structure as the Data blocks
+The Data and Index components are implemented as separate physical files
+
+For a KSDS or AIX, the Index provides access to a specific key and in
+turn, the Index record will provide the XLRA of the Data block
+containing the record with that key
+
+For other types of dataset the index will speed up direct access by
+RBA(ESDS) or RRN(RRDS)
+
+Index blocks are organized in a layered structure, where the top layer
+will always contain exactly one block called the Root block
+
+The bottom layer of the Index structure contains so-called leaf blocks,
+these contain an XLRA that points to the actual record in the base
+component. Higher levels contain an XLRA that points to the Index block
+containing the highest key/RBA/RRN in the next lower level in the Index
+component
+
+The leaf blocks constitute level 0 of the layered structure
+Each subsequent overlying layer constitutes the next level
+The level of the Root block is incremented each time a new layer is
+created. ie. each time the Root block is split
+The index level of non-Root blocks is never changed
+
+The index level of each index block is encoded in BHDRXLVL
+Each layer in the Index is chained off a pair of anchors in the Prefix
+block
+The Root is chained off the PFXROOT field
+All other layers are chained off PFXBLVLn/PFXELVLn with n being a
+hexadecimal digit ranging from 0 through F. These chains enable fast
+sequential access to the index
+
+Index entry format:Level 0
+   DC   XLn       key/alternate key of length n or XRBA/XRRN(n=8)
+   DC   XL8       XLRA to base record
+
+Index entry format:Later Levels
+   DC   XLn       key/alternate key of length n or XRBA/XRRN(n=8)
+   DC   XL8       XLRA to previous index level
+
+Physical structure - Dataset types
+==================================
+ESDS Structure
+--------------
+An ESDS is a sequential table of records
+Records can only be added to the end of the dataset
+All types of ESDS may have an AIX
+
+An index is built to facilitate faster direct access by RBA
+
+RRDS structure
+--------------
+The input format to an RRDS consists of a ten-byte slot position
+followed by the data
+
+All slots are allocated up to the last record
+Empty slots have RPTR_MTY set
+
+For fixed RRDS, each empty slot consists of a whole record of nulls
+For variable RRDS, each empty slot consists of a null RDW, X'00040000'
+
+An add beyond the current last slot number will create further empty
+slots and the record as needed
+
+An index is built to facilitate faster direct access by RRN
+
+KSDS Structure
+--------------
+Each KSDS consists of two components: a base component holding the
+record data and an index component holding the index structure
+
+The KSDS Base component consists of Data blocks, chained by the block
+headers in logical sequence. Records are allocated to the block where
+they logically belong, ordered by their key sequence
+
+Within a block records need not be kept in physical sequence: their
+sequence is defined by the table of pointers (RPTRs) directly
+following the block Header
+
+When a block overflows, it will be split. That is, a new block is
+allocated, following the rules outlined above under the heading for
+Spacemap blocks
+
+Index Structure
+---------------
+The leaf nodes are anchored off PFXBDATA/PFXEDATA
+
+The Root block is anchored from PFXROOT. The Root block constitutes
+the highest index level in the file
+That index level always contains only a single block
+
+Level 0 in the index contains the Leaf blocks
+All levels between 0 and the Root level are called intermediate levels
+
+When a single index block suffices, the Root block is level 0 and a
+leaf block as well. When a single block cannot hold all index entries,
+then the Root block is not a leaf block
+Thus, instead of pointing to data records, it points to index blocks
+in the next lower index level
+
+These in turn can be either leaf blocks, or they can be intermediate
+blocks. As many levels of indexing will exist as are necessary to
+accommodate all index entries
+
+When following the XLRA pointers from one level to the next the
+BHDRXLVL field is checked against the expected value, which is always
+one less than the level of the block holding the XLRA we're following
+If a mismatch occurs, the index is corrupt and an abend will result
+
+The Root block can be found from the PFXROOT field in the Prefix block
+All other index layers are chained using their BHDRNEXT/BHDRPREV
+pointers. For each index level there is a separate chain, anchored in
+the PFXBLVLn/PFXELVLn fields in the Prefix block
+
+Non-leaf entries point to a block in the next lower index layer
+
+Leaf blocks contain one entry for each record in the Base component
+These entries all have an exact key/RBA/RRN value that matches the
+addressed record in the Base Component
+
+Intermediate layers contain as many entries as there are blocks in the
+index layer directly below it
+Each entry holds the highest key/RBA/RRN that has occurred in the entire
+block addressed by that entry
+
+AIX Structure
+-------------
+An AIX provides an alternate index to access a KSDS or ESDS component
+For an AIX over an ESDS, IBM uses the XRBA, it's easier for zVSAM to
+use the XLRA
+
+Each AIX is implemented as a KSDS holding data records that relate the
+alternate key value to one or more primary key/XLRA values
+An AIX may be defined in the catalog and accessed as an independant KSDS
+
+Each alternate key value occurs only once in the AIX data component If
+more than one record in the base cluster contains that alternate key
+value (non-unique), then multiple primary keys/XLRAs will be held
+within the AIX-record for that alternate key value and the AIX will
+become a variable spanned KSDS
+
+Thus, the alternate key values defined on the base records serve as a
+unique primary key in the AIX data component. The AIX index component
+then can be used to index the AIX data component in the usual way
+
+The AIX data records have two formats: one for unique keys and one for
+non-unique keys
+
+AIX records for unique records are defined as:
+   DC   XLy  alternate key of length y
+   DC   XLz  base key of length z or XLRA(z=8)
+
+AIX records for non-unique records are defined as:
+   no prefix       for small records
+   SDW+RDW prefix  for medium records spanned
+   SDW+RDF prefix  for large records spanned
+   DC   XLy        alternate key of length y
+   DC   XL2        no. of following entries (z)
+   DC   zXLn       z base keys of length n or XLRAs(n=8)
+
+If the non-unique record fits within a data block it will become a
+standard variable record, RDW prefixed (LL00) with RPTR_SEG off
+
+If it has to be split into segments then RPTR_SEG is set on and an SDW
+prefix is added
+The first segment goes into a data block and is restricted in size,
+currently 500 bytes set by SDWSIZE.
+Subsequent segments go into segment blocks and each segment is chained
+to the next
+
+When a non-unique record is bigger than a whole block, then the prefix
+is changed to SDW,RDF where RDF is LLLL and the SDWSRDF bit is set on
+This is because the length in RDW is likely to be too small to
+accommodate large numbers of alternate base keys
+Subsequent segments go into segment blocks and each segment is chained
+to the next
+
+Primary keys/XLRAs are maintained sequentially
+Addition/Deletion of keys/XLRAs will be treated the same as an update
+to a variable spanned KSDS
+
+When a non-unique AIX record is spanned, only a whole number of primary
+keys or XLRAs will be contained within a segment to make access easier
+The prefix will also never be split between segments
+
+End of document
+

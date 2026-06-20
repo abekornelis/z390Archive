@@ -1,0 +1,10 @@
+> cd \Tools\PortableApps\git
+> mygit add .
+
+
+E:\Tools\PortableApps\git>mygit add . 
+On entry, CD is ..... E:\Tools\PortableApps\git.
+Now, CD is .......... E:\Dev\projv2.
+warning: LF will be replaced by CRLF in z390/cmd.pl.
+The file will have its original line endings in your working directory
+Press any key to continue . . . 
