@@ -1,0 +1,330 @@
+34c34
+<    /*****************************************************
+---
+>    /*_***************************************************     // RPI 1627
+210c210,211
+<     * 16-12-24 RPI 1598  Provide a means to select either original VSAM or the new one
+---
+>     * 16-12-24 RPI 1598  Provide a means to select either original VSAM or the new one . !! HS moving to vz390.
+>     * 19-01-31 RPI 1628  VSAM versions now 1,2 rather than 0,1.
+832,835c833,835
+<   /* ********************************************** */   // RPI 1598
+<   /* Anchor points for globals supporting new zVSAM */   // RPI 1598
+<   /* ********************************************** */   // RPI 1598
+<   LinkedList<zACB> zACB_list;                            // RPI 1598
+---
+> 
+>      ebcdicStryng ebcdic_dcb_id_ver = null;              // RPI 1598
+> 
+839,840c839,844
+< public void svc(int svc_id){
+< 	/*
+---
+> 
+> 
+>   /* ************************************************************* */
+> 
+> 
+>    /**
+843a848
+> public void svc(int svc_id){
+979,980c984,988
+< public synchronized void put_log(String msg) {
+<    	/*
+---
+> 
+> 
+> 
+> 
+>       /**
+984a993
+> public synchronized void put_log(String msg) {
+1007,1008c1016,1020
+< private void put_log_line(String msg){
+< 	   /*
+---
+> 
+> 
+> 
+> 
+>       /**
+1010a1023
+> private void put_log_line(String msg){
+1027,1028c1040,1044
+< private void put_con(String msg){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1031a1048
+> private void put_con(String msg){
+1037,1038c1054,1058
+< public void log_error(int error,String msg){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1042a1063
+> public void log_error(int error,String msg){
+1051,1052c1072,1076
+< public synchronized void abort_error(int error,String msg){  // RPI 646
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1055a1080
+> public synchronized void abort_error(int error,String msg){  // RPI 646
+1090,1091c1115,1119
+< public void exit_ez390(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1094a1123
+> public void exit_ez390(){
+1125,1126c1154,1158
+< private synchronized void close_z390_guam(){  // RPI 397
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1129a1162
+> private synchronized void close_z390_guam(){  // RPI 397
+1137,1138c1170,1174
+< private void put_stats(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1140a1177
+> private void put_stats(){
+1212,1213c1249,1253
+< public void put_stat_line(String msg){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1215a1256
+> public void put_stat_line(String msg){
+1222,1223c1263,1267
+< private synchronized void close_files(){  // RPI 661
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1226a1271
+> private synchronized void close_files(){  // RPI 661
+1249,1250c1294,1298
+< private void close_cmd(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1252a1301
+> private void close_cmd(){
+1261,1262c1310,1314
+< public void init_time(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1270a1323
+> public void init_time(){
+1303,1304c1356,1360
+< public void init_test(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /** <pre>
+1330a1387
+>      * </pre>
+1331a1389
+> public void init_test(){
+1362,1363c1420,1424
+< public void open_files(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1366a1428
+> public void open_files(){
+1386,1387c1448,1453
+<  private void svc_exit(){
+<  	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+>     * <pre>
+1395a1462
+>     * </pre>
+1396a1464
+>  private void svc_exit(){
+1462,1463c1530,1534
+< private void svc_extract(){ // RPI 413
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1469a1541
+> private void svc_extract(){ // RPI 413
+1502,1503c1574,1579
+< public void svc_load(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+>     * <pre>
+1528a1605
+>     * </pre>
+1529a1607
+> public void svc_load(){
+1564,1565c1642,1646
+< private void svc_load_set_regs(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1567a1649
+> private void svc_load_set_regs(){
+1576,1577c1658,1662
+< private void svc_load_390(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1580a1666
+> private void svc_load_390(){
+1632,1633c1718,1722
+< private void svc_load_rlds(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+1636a1726
+> private void svc_load_rlds(){
+1691,1692c1781,1786
+< private void svc_load_file(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+>     * <pre>
+1699a1794
+>     * </pre>
+1700a1796
+> private void svc_load_file(){
+1733,1734c1829,1834
+< private void svc_xctl(){
+< 	/*
+---
+> 
+> 
+> 
+> 
+>    /**
+>     * <pre>
+1745a1846
+>     * </pre>
+1746a1848
+> private void svc_xctl(){
+2983a3210
+>    // !! Testing: assume R1->xCB, not R1->plist->xCB...
+2986,2987c3213,3217
+< 	byte cur_acb_id = pz390.mem.get(cur_dcb_addr);
+< 	if (cur_acb_id == tz390.acb_id_ver){
+---
+> 
+>    if (ebcdic_dcb_id_ver.equals(pz390.mem_byte[cur_dcb_addr])) {
+>      svc_open_dcb("");
+>      }
+>    else {
+2990,2996d3219
+<         if (tz390.opt_zvsam > 0)                   // RPI 1598
+<            {zACB TempACB = new zACB(cur_dcb_addr); // RPI 1598
+<             TempACB.Open();                        // RPI 1598
+<             zACB_list.add(TempACB);                // RPI 1598
+<             }                                      // RPI 1598
+<         } else {
+< 		svc_open_dcb("");
+3022c3249
+< 	 *    R0  - 64 bit file length RPI 587
+---
+>     *    R0  - 64 bit file length RPI 587                     3
+3161a3405
+>    // !! Testing: assume R1->xCB, not R1->plist->xCB...
+3164c3408,3410
+< 	if (cur_acb_id == tz390.acb_id_ver){
+---
+>    if (ebcdic_dcb_id_ver.equals(pz390.mem_byte[cur_dcb_addr])) {
+>       svc_close_dcb();
+>    } else {
+3167,3173d3412
+<         if (tz390.opt_zvsam > 0)                   // RPI 1598
+<            {zACB TempACB = new zACB(cur_dcb_addr); // RPI 1598
+<             TempACB.Close();                       // RPI 1598
+<             zACB_list.remove(TempACB);             // RPI 1598
+<             }                                      // RPI 1598
+< 	} else {
+< 		svc_close_dcb();
+6897a7400,7403
+> 
+>    try {
+>      ebcdic_dcb_id_ver = new ebcdicStryng(tz390.dcb_id_ver);   // RPI 1598
+>      } catch(java.io.IOException e) { abort_error(99, "!! sz390 failed convert to EBCDIC: "+ e); }

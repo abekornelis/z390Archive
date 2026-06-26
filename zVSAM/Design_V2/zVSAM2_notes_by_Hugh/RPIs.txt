@@ -1,0 +1,34 @@
+RPIs - possible
+
+I'm keeping this file to record WIBNIs (Wouldn't It Be Nice If), particularly those that are not urgent, or that need more thought...
+HS
+--
+
+HS01 Restructure vz390 to accommodate upcoming V2 changes (!!RPI number already assigned by AK in email).
+
+HS02 Make the documentation tool do more of our work for us: run Javadoc over the entire source code.
+
+HS03 Fix the _one single character_ in over 8000 lines of tz390 code that prevents Javadoc from running. (Needs to pass
+      all regression tests. Better still: understand what the character is for.)
+
+HS04 (As time goes by) write explanatory comments into the existing code for javadoc to pick up.
+
+HS05 A script to convert assembly listing of Control Block DSECT into list of offsets in Java language. (Looking in the
+      mirror) I don't trust any coder to get them all correct by hand.
+
+HS06 Store converted DSECT Java code in one or more Java Interface source files that can be imported wherever needed.
+
+HS07 Is there a repository for Design Docs, Developer Notes, Javadoc listings, Developer Tools etc. (And some of our email conversations are worth pasting in there.)
+
+HS08  Make the compiler do more of our work for us:
+      Reduce ambiguity by tightening constraints that will be checked, and enforced, by the compiler. E.g.,
+      constants (which are rather like EQU stmts in ASM) should be clearly distinguished from variable data.
+      "byte vsam_op_open = 19;" will probably suggest its meaning to someone already familiar with VSAM, but
+      not necessarily to others ("hmm, is there a maximum of 19 ACBs we can have open, and we count downwards?"; whereas
+      "public static final byte vsam_op_open = 19;" tells the reader that it's unmodifiable, and readable by
+      other classes.
+      "private static final boolean DEV = false;" means it is unmodifiable and inaccessible to other classes. All-caps is
+      a convention, not enforced by the compiler, that suggests to a knowledgeable Java programmer that it's a constant,
+      when he encounters its use 5000 lines away from its declaration.
+      I think 'public' or 'private' should be explicit on nearly every declaration of a variables.
+

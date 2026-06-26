@@ -1,0 +1,79 @@
+Notes on MF=
+============
+
+ACE=parameter list
+Note: Can't find a DSECT for this, structure is fairly simple
+
+MF area is where the ACE is built
+   Can be own GETMAINed area, in which case area can be reg format
+
+WAREA/LENGTH (W/L) is where the block (ACB etc) is/will be built
+   If not present, GETMAIN is done for you: R1=addr, R0=length
+   WAREA can be own GETMAINed area, in which case can be reg format
+
+Where only the ACE is created the (E,area) form must be used to build
+the block
+
+MF=      W/L   Actions
+-------- ---   -------
+omitted  no    Executable code
+               Builds an ACE inline with W/L=0
+               Invokes IDA019C1 to build block in GETMAINed area
+               Re-entrant: Yes
+
+omitted  yes   Executable code
+               Builds an ACE inline with W/L parms set
+               Invokes IDA019C1 to build block in WAREA
+               Re-entrant: Yes, if WAREA GETMAINed by app
+
+L        no    Data only, use own addressing
+               Builds an ACE inline with W/L=0
+               Re-entrant: No, ACE can be modified
+
+L        yes   Data only, use own addressing
+               Builds an ACE inline with W/L parms set
+               Re-entrant: No, ACE can be modified
+
+(L,area) no    Executable code
+               Builds an ACE inline with W/L=0
+               Moves ACE to area
+               Re-entrant: Yes, if WAREA GETMAINed by app
+
+(L,area) yes   Executable code
+               Builds an ACE inline with W/L parms set
+               Moves ACE to area
+               Re-entrant: Yes, if WAREA GETMAINed by app
+
+(E,area) no    Executable code
+               Uses the ACE in area unmodified by W/L
+               Can be used to modify a value in an existing ACE
+               Can't be used to extend an ACE
+               Invokes IDA019C1 to build block in WAREA or GETMAINed
+               area according to W/L content
+               Re-entrant: Depends on how the ACE was created
+
+(E,area) yes   Executable code
+               Uses the ACE in area modified by W/L
+               Can be used to modify a value in an existing ACE
+               Can't be used to extend an ACE
+               Invokes IDA019C1 to build block in WAREA
+               Re-entrant: Depends on how the ACE was created
+
+(G,area) no    Executable code
+               Builds an ACE inline with W/L=0
+               Moves ACE to area
+               Invokes IDA019C1 to build block in GETMAINed area
+               Re-entrant: Yes
+
+(G,area) yes   Executable code
+               Builds an ACE inline with W/L parms set
+               Moves ACE to area
+               Invokes IDA019C1 to build block in WAREA
+               Re-entrant: Yes
+
+What do we do ?
+---------------
+I can code GENCB etc. to build the ACE structure
+We then have the choice of using an SVC and let Java build a block
+or I can LINK to the equivalent of IDA019C1 to do it
+

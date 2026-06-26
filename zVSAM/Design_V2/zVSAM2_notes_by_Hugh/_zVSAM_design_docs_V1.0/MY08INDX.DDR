@@ -1,0 +1,251 @@
+!!FIL!! e:\z390\zvsam\data\myfile08.idx
+!!PRT!! PREFIX BLOCK
+!!PRT!! name.... abs/ofst rel/ofst length.. type data
+BHDREYE  00000000 00000003 CHAR
+BHDRSEQ# 00000004 00000001 HEXA
+BHDRVER  00000003 00000001 BYX+
+                           + 01 BHDR_V1  Version 1
+BHDRFLGS 00000005 00000001 BIT+
+                           + 80 BHDR_HDR Prefix Block
+                           + 40 BHDR_MAP Spacemap Block
+                           + 20 BHDR_DTA Data Block
+                           + 10 BHDR_NDX Index Block
+                           + 08 BHDR_RUT Index Root block
+                           + 04 BHDR_LEF Index Leaf block
+BHDR#REC 00000006 00000001 HEXD
+BHDRXLVL 00000007 00000001 HEXA
+BHDRSELF 00000008 00000008 HEXA
+BHDRNEXT 00000010 00000008 HEXA
+BHDRPREV 00000018 00000008 HEXA
+BHDRFRE@ 00000020 00000003 HEXA
+BHDRFREE 00000023 00000003 HEXD
+--pad--- 00000026 00000002 HEXA
+* end of BHDR
+PFXDVOL@ 00000028 00000003 HEXA
+PFXDNAM@ 0000002B 00000003 PTR1
+PFXDPAT@ 0000002E 00000003 PTR1
+PFXXVOL@ 00000031 00000003 HEXA
+PFXXNAM@ 00000034 00000003 PTR1
+PFXXPAT@ 00000037 00000003 PTR1
+--rsvd-- 0000003A 00000001 HEXA
+PFXALTHR 0000003B 00000001 HEXA
+PFXBLKSZ 0000003C 00000004 HEXD
+PFXHXLRA 00000040 00000008 HEXA
+PFXBMAP  00000048 00000008 HEXA
+PFXEMAP  00000050 00000008 HEXA
+PFXMAPNW 00000058 00000008 HEXA
+PFXBDATA 00000060 00000008 HEXA
+PFXEDATA 00000068 00000008 HEXA
+PFXBOVFL 00000070 00000008 HEXA
+PFXEOVFL 00000078 00000008 HEXA
+PFXROOT  00000080 00000008 HEXA
+PFXBLVL0 00000088 00000008 HEXA
+PFXELVL0 00000090 00000008 HEXA
+PFXBLVL1 00000098 00000008 HEXA
+PFXELVL1 000000A0 00000008 HEXA
+PFXBLVL2 000000A8 00000008 HEXA
+PFXELVL2 000000B0 00000008 HEXA
+PFXBLVL3 000000B8 00000008 HEXA
+PFXELVL3 000000C0 00000008 HEXA
+PFXBLVL4 000000C8 00000008 HEXA
+PFXELVL4 000000D0 00000008 HEXA
+PFXBLVL5 000000D8 00000008 HEXA
+PFXELVL5 000000E0 00000008 HEXA
+PFXBLVL6 000000E8 00000008 HEXA
+PFXELVL6 000000F0 00000008 HEXA
+PFXBLVL7 000000F8 00000008 HEXA
+PFXELVL7 00000100 00000008 HEXA
+PFXBLVL8 00000108 00000008 HEXA
+PFXELVL8 00000110 00000008 HEXA
+PFXBLVL9 00000118 00000008 HEXA
+PFXELVL9 00000120 00000008 HEXA
+PFXBLVLA 00000128 00000008 HEXA
+PFXELVLA 00000130 00000008 HEXA
+PFXBLVLB 00000138 00000008 HEXA
+PFXELVLB 00000140 00000008 HEXA
+PFXBLVLC 00000148 00000008 HEXA
+PFXELVLC 00000150 00000008 HEXA
+PFXBLVLD 00000158 00000008 HEXA
+PFXELVLD 00000160 00000008 HEXA
+PFXBLVLE 00000168 00000008 HEXA
+PFXELVLE 00000170 00000008 HEXA
+PFXBLVLF 00000178 00000008 HEXA
+PFXELVLF 00000180 00000008 HEXA
+PFXMAPOF 00000188 00000003 HEXA
+PFXMAPDT 0000018B 00000004 HEXA
+PFXFRSPC 0000018F 00000001 HEXD
+PFXFRBLK 00000190 00000001 HEXD
+PFXFRINT 00000191 00000001 HEXD
+PFXFFLGS 00000192 00000001 BIT+
+                           + 80 PFX_ESDS ESDS
+                           + 40 PFX_KSDS KSDS
+                           + 20 PFX_RRDS RRDS
+                           + 10 PFX_LDS  LDS
+                           + 08 PFX_AIX  AIX
+                           + 01 PFX_INDX INDEX
+PFXRFLGS 00000193 00000001 BIT+
+                           + 80 PFX_RFIX fixed
+                           + 40 PFX_RSEG spanned
+                           + 20 PFX_KFIX fixed length keys
+                           + 10 PFX_KUNQ unique keys
+PFXRCLEN 00000194 00000004 HEXD
+PFXKYLEN 00000198 00000004 HEXD
+PFXKYOFF 0000019C 00000004 HEXD
+* end of PFX
+BFTREYE  00000FFC 00000003 CHAR
+BFTRSEQ# 00000FFF 00000001 HEXA
+* end of FTR
+*
+!!PRT!!
+!!PRT!! SPACEMAP BLOCK
+!!PRT!! name.... abs/ofst rel/ofst length.. type data
+!!OFF!! 00001000 increment primary offset
+BHDREYE  00000000 00000003 CHAR
+BHDRVER  00000003 00000001 BYX+
+                           + 01 BHDR_V1  Version 1
+BHDRSEQ# 00000004 00000001 HEXA
+BHDRFLGS 00000005 00000001 BIT+
+                           + 80 BHDR_HDR Prefix Block
+                           + 40 BHDR_MAP Spacemap Block
+                           + 20 BHDR_DTA Data Block
+                           + 10 BHDR_NDX Index Block
+                           + 08 BHDR_RUT Index Root Block
+                           + 04 BHDR_LEF Index Leaf block
+BHDR#REC 00000006 00000001 HEXD
+BHDRXLVL 00000007 00000001 HEXA
+BHDRSELF 00000008 00000008 HEXA
+BHDRNEXT 00000010 00000008 HEXA
+BHDRPREV 00000018 00000008 HEXA
+BHDRFRE@ 00000020 00000003 HEXA
+BHDRFREE 00000023 00000003 HEXD
+--pad--- 00000026 00000002 HEXA
+MAPXLRA  00000028 00000008 HEXA
+MAPBITS  00000030 00000001 BITM
+                           + 10------ Block  0 allocated (Spacemap)
+                           + 11------ Block  0 full (Spacemap)
+                           + --10---- Block  1 allocated
+                           + --11---- Block  1 full
+                           + ----10-- Block  2 allocated
+                           + ----11-- Block  2 full
+                           + ------10 Block  3 allocated
+                           + ------11 Block  3 full
+MAPBITS  00000031 00000001 BITM
+                           + 10------ Block  4 allocated
+                           + 11------ Block  4 full
+                           + --10---- Block  5 allocated
+                           + --11---- Block  5 full
+                           + ----10-- Block  6 allocated
+                           + ----11-- Block  6 full
+                           + ------10 Block  7 allocated
+                           + ------11 Block  7 full
+MAPBITS  00000032 00000001 BITM
+                           + 10------ Block  8 allocated
+                           + 11------ Block  8 full
+                           + --10---- Block  9 allocated
+                           + --11---- Block  9 full
+                           + ----10-- Block 10 allocated
+                           + ----11-- Block 10 full
+                           + ------10 Block 11 allocated
+                           + ------11 Block 11 full
+MAPBITS  00000033 00000001 BITM
+                           + 10------ Block 12 allocated
+                           + 11------ Block 12 full
+                           + --10---- Block 13 allocated
+                           + --11---- Block 13 full
+                           + ----10-- Block 14 allocated
+                           + ----11-- Block 14 full
+                           + ------10 Block 15 allocated
+                           + ------11 Block 15 full
+MAPBITS  00000034 00000001 BITM
+                           + 10------ Block 16 allocated
+                           + 11------ Block 16 full
+                           + --10---- Block 17 allocated
+                           + --11---- Block 17 full
+                           + ----10-- Block 18 allocated
+                           + ----11-- Block 18 full
+                           + ------10 Block 19 allocated
+                           + ------11 Block 19 full
+MAPBITS  00000035 00000001 BITM
+                           + 10------ Block 20 allocated
+                           + 11------ Block 20 full
+                           + --10---- Block 21 allocated
+                           + --11---- Block 21 full
+                           + ----10-- Block 22 allocated
+                           + ----11-- Block 22 full
+                           + ------10 Block 23 allocated
+                           + ------11 Block 23 full
+MAPBITS  00000036 00000001 BITM
+                           + 10------ Block 24 allocated
+                           + 11------ Block 24 full
+                           + --10---- Block 25 allocated
+                           + --11---- Block 25 full
+                           + ----10-- Block 26 allocated
+                           + ----11-- Block 26 full
+                           + ------10 Block 27 allocated
+                           + ------11 Block 27 full
+* end of BHDR
+BFTREYE  000001F7 00000003 CHAR
+BFTRSEQ# 000001FA 00000001 HEXA
+!!OFF!! 000001FB increment primary offset
+*
+!!LBL!! INDXLAB
+!!PRT!!
+!!PRT!! INDEX BLOCK
+!!PRT!! name.... abs/ofst rel/ofst length.. type data
+BHDREYE  00000000 00000003 CHAR
+BHDRVER  00000003 00000001 BYX+
+                           + 01 BHDR_V1  Version 1
+BHDRSEQ# 00000004 00000001 HEXA
+BHDRFLGS 00000005 00000001 BIT+
+                           + 80 BHDR_HDR Prefix Block
+                           + 40 BHDR_MAP Spacemap Block
+                           + 20 BHDR_DTA Data Block
+                           + 10 BHDR_NDX Index Block
+                           + 08 BHDR_RUT Index Root Block
+                           + 04 BHDR_LEF Index Leaf block
+BHDR#REC 00000006 00000001 HEXD
+BHDRXLVL 00000007 00000001 BYX+
+                           + 00 Level  0
+                           + 01 Level  1
+                           + 02 Level  2
+                           + 03 Level  3
+                           + 04 Level  4
+                           + 05 Level  5
+                           + 06 Level  6
+                           + 07 Level  7
+                           + 08 Level  8
+                           + 09 Level  9
+                           + 0A Level 10
+                           + 0B Level 11
+                           + 0C Level 12
+                           + 0D Level 13
+                           + 0E Level 14
+                           + 0F Level 15
+BHDRSELF 00000008 00000008 HEXA
+BHDRNEXT 00000010 00000008 HEXA
+BHDRPREV 00000018 00000008 HEXA
+BHDRFRE@ 00000020 00000003 HEXA
+BHDRFREE 00000023 00000003 HEXD
+--pad--- 00000026 00000002 HEXA
+* end of BHDR
+!!OF1!! 00000028 increment offset
+!!LBL!! RPTLAB01
+RPTRFLGS 00000000 00000001 BYX+
+                           + 00 RPTR_ACT active record
+                           + 80 RPTR_MTY inactive record
+                           + 40 RPTR_DIS displaced record
+                           + 20 RPTR_MOV moved record
+                           + 10 RPTR_FAK fake XLRA
+                           + FF RPTR_END terminating entry
+RPTRREC@ 00000001 00000003 PTR2 C00FX08
+!!OF1!! 00000004 increment offset
+!!CYC!! RPTLAB01 FF loop X'..' times until RPTRREC@=foxes
+*
+* end of RPT
+!!OFF!! 00000000 reset OF1
+BFTREYE  000001F7 00000003 CHAR
+BFTRSEQ# 000001FA 00000001 HEXA
+!!OFF!! 000001FB increment primary offset
+!!CYC!! INDXLAB  15 loop X'..' times
+!!END!!
+

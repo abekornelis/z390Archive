@@ -1,0 +1,700 @@
+IFGRPL   DS    0D                                                       09050000
+IHARPL   EQU   IFGRPL
+**--> We'll support this field
+
+RPLIDWD  EQU   *                               RPL IDENTIFICATION WORD  09150000
+**--> We'll support this field
+RPLID    DS    XL1                             RPL IDENTIFIER           09200000
+**--> We'll support this field
+RPLIDD   EQU   X'00'                           IDENTIFIER VALUE - X'00' 09210000
+**--> We'll support this value
+
+RPLSTYP  DS    XL1                             RPL SUBTYPE - SET TO     09250000
+*                                              X'00' FOR DATA           09260000
+*                                              MANAGEMENT AND X'0D'     09270000
+*                                              FOR JECS                 09280000
+**--> We'll support this field
+RPLSVSAM EQU   X'10'                           VSAM SUBTYPE     X04SVHS 09282000
+**--> We'll support this value
+RPLSTERM EQU   X'12'                           SUBTYPE FOR RECORD MGMT  09282800
+*                                              ENTERED FROM CLOSE       09283600
+*                                              ISSUED BY TASK           09284400
+*                                              TERMINATION     @YA43869 09285200
+**--> We won't support this value
+RPLSVTAM EQU   X'20'                           VTAM SUBTYPE     X04SVHS 09286000
+**--> We won't support this value
+RPLS3540 EQU   X'40'                           3540 SUBTYPE     X04SVHS 09288000
+**--> We won't support this value
+RPLCRID  EQU   X'FF'                           CRPL ID (VTAM)    X03004 09290000
+**--> We won't support this value
+
+RPLREQ   DS    XL1                             RPL REQUEST TYPE         09300000
+**--> We'll support this field
+RPLGET   EQU   X'00'                           GET                      09310000
+**--> We'll support this value
+RPLPUT   EQU   X'01'                           PUT                      09320000
+**--> We'll support this value
+RPLPOINT EQU   X'03'                           POINT                    09330000
+**--> We'll support this value
+RPLERASE EQU   X'05'                           ERASE                    09340000
+**--> We'll support this value
+RPLJSFMT EQU   X'07'                           JES FORMAT REQUEST       09341400
+**--> We won't support this value
+
+*        THE FOLLOWING CODES ARE NOT STORED IN RPLREQ, BUT ARE          09344700
+*        AVAILABLE IN REGISTER 0 WHEN THE FUNCTION IS ENTERED           09346100
+*        AND STORED IN RPLREQ DURING PROCESSING OF THE FUNCTION.        09347500
+RPLCHECK EQU   X'02'                           CHECK                    09348900
+**--> We'll support this value. Used with asynchronous requests (ASY)
+RPLENDRE EQU   X'04'                           ENDREQ                   09350300
+**--> We'll support this value. Needed to terminate a READ-for-UPDATE if we decide not to
+RPLVERIF EQU   X'06'                           VERIFY                   09351700
+**--> We won't support this value
+RPLIMPRT EQU   X'07'                           IMPORT                   09353100
+**--> We won't support this value
+RPLPFMTD EQU   X'08'                           DATA PREFORMAT           09354500
+**--> We won't support this value
+RPLPFMTI EQU   X'09'                           INDEX PREFORMAT          09355900
+**--> We won't support this value
+RPLFRCIO EQU   X'0A'                           FORCE I/O                09357300
+**--> We won't support this value
+RPLCNVTA EQU   X'10'                           CNVTAD          @ZA37315 09358700
+**--> We won't support this value
+RPLMNTAC EQU   X'11'                           MNTACQ(VSAM)    @ZA37315 09358900
+**--> We won't support this value
+RPLWRITE EQU   X'11'                           WRITE(VTAM)       X03004 09359100
+**--> We won't support this value
+RPLACQRA EQU   X'12'                           ACQRANGE(VSAM)  @ZA37315 09359300
+**--> We won't support this value
+RPLRESET EQU   X'12'                           RESET(VTAM)       X03004 09360100
+**--> We won't support this value
+RPLTERM  EQU   X'13'                           TERMRPL         @ZA32757 09360800
+**--> We won't support this value
+RPLDO    EQU   X'13'                           DO(VTAM)          X03004 09361500
+**--> We won't support this value
+RPLVERRF EQU   X'14'                           VERIFY REFRESH      @L2A 09362200
+**--> We won't support this value
+RPLLKADD EQU   X'15'                           LKADD REQUEST(VSAM) @L3A 09362300
+**--> We won't support this value
+RPLLKREL EQU   X'16'                           LKREL REQUEST(VSAM) @L3A 09362400
+**--> We won't support this value
+RPLLKCD  EQU   X'17'                           LKCD  REQUEST(VSAM) @L3A 09362500
+**--> We won't support this value
+RPLINQRC EQU   X'18'                           INQRC REQUEST(VSAM) @L3A 09362600
+**--> We won't support this value 
+RPLRETLK EQU   X'19'                           RETLK REQUEST(VSAM) @L3A 09362700
+**--> We won't support this value
+RPLRECOV EQU   X'1A'                           RECOV REQUEST(VSAM) @L3A 09362800
+**--> We won't support this value
+RPLQUI   EQU   X'1B'                           QUIESCE REQ  (VSAM) @L3A 09363300
+**--> We won't support this value
+RPLEADD  EQU   X'1C'                           EADD  REQUEST(VSAM) @L3A 09363500
+**--> We won't support this value
+RPLQUISE EQU   X'15'                           SETLOGON(VTAM)    X03004 09363800
+**--> We won't support this value
+RPLSMLGO EQU   X'16'                           SIMLOGON(VTAM)    X03004 09364300
+**--> We won't support this value
+RPLOPNDS EQU   X'17'                           OPNDST(VTAM)      X03004 09365700
+**--> We won't support this value
+RPLCHNG  EQU   X'19'                           CHANGE(VTAM)      X03004 09367100
+**--> We won't support this value
+RPLINQIR EQU   X'1A'                           INQUIRE(VTAM)     X03004 09368500
+**--> We won't support this value
+RPLINTPT EQU   X'1B'                           INTRPRET(VTAM)    X03004 09369900
+**--> We won't support this value
+RPLREAD  EQU   X'1D'                           READ(VTAM)        X03004 09370300
+**--> We won't support this value
+RPLSLICT EQU   X'1E'                           SOLICIT(VTAM)     X03004 09370700
+**--> We won't support this value
+RPLCLOSE EQU   X'1F'                           CLSDST(VTAM)      X03004 09371100
+**--> We won't support this value
+RPLCLACB EQU   X'21'                           CLOSEACB(VTAM)    X03004 09371900
+**--> We won't support this value
+RPLSNDCD EQU   X'22'                           SEND(VTAM)       X3004BS 09373900
+**--> We won't support this value
+RPLRCVCD EQU   X'23'                           RECEIVE(VTAM)    X3004BS 09375900
+**--> We won't support this value
+RPLRSRCD EQU   X'24'                           RESETSR(VTAM)    X3004BS 09377900
+**--> We won't support this value
+RPLSSCCD EQU   X'25'                           SESSIONC(VTAM)   X3004BS 09378300
+**--> We won't support this value
+RPLSDCMD EQU   X'27'                           SENDCMD(VTAM)   @Z40BHUC 09382500
+**--> We won't support this value
+RPLRVCMD EQU   X'28'                           RCVCMD(VTAM)    @Z40BHUC 09383000
+**--> We won't support this value
+RPLTREQS EQU   X'29'                           REQSESS(VTAM)   @G40AKCM 09383500
+**--> We won't support this value
+RPLTOPNS EQU   X'2A'                           OPNSEC(VTAM)    @G40AKCM 09383900
+**--> We won't support this value
+RPLTCLSS EQU   X'2B'                           CLSSEC(VTAM)    @G40AKCM 09384300
+**--> We won't support this value
+RPLTRMS  EQU   X'2C'                           TRMSESS(VTAM)   @G40AKCM 09384700
+**--> We won't support this value
+
+RPLLEN   DS    0XL1                            LENGTH OF THIS RPL       09385600
+**--> We'll support this field
+
+RPLLEN2  DS    XL1                             ALTERNATE NAME FOR       09389200
+*                                              RPLLEN            X03004 09399200
+**--> We'll support this field
+
+RPLPLHPT DS    A                               POINTER TO PLACEHOLDER   09400000
+**--> We won't support this field
+MM>>>You'll want this one
+     It references the position derived from POINT
+     (Arcane)...you can chain RPLs together, so therefore you can have a
+     chain of PLHs...don't go there :-)
+
+RPLECB   DS    A                               INTERNAL ECB OR          09500000
+*                                              POINTER TO EXTERNAL ECB  09506000
+*        ECB FLAGS                                                      09520000
+**--> We'll support this field
+RPLWAIT  EQU   X'80'                           A REQUEST HAS BEEN       09550000
+*                                              ISSUED                   09560000
+**--> We'll support this value
+RPLPOST  EQU   X'40'                           THE REQUEST HAS          09600000
+*                                              COMPLETED                09602000
+**--> We'll support this value
+
+RPLFDBWD DS    0XL4                            FEEDBACK WORD    X04SVHS 09604000
+**--> We'll support this field
+
+RPLSTAT  DS    XL1                             CURRENT RPL STATUS       09610000
+**--> We'll support this field
+
+RPLFUNCD EQU   RPLSTAT                       PROB DET FUNCT CD @ZA42006 09630000
+**--> We'll support this field
+
+RPLFDBK  DS    0XL3                            ERROR FEEDBACK           09650000
+**--> We'll support this field
+
+RPLRTNCD DS    0XL1                            RPL RETURN CODE          09700000
+**--> We'll support this field
+RPLNOERR EQU   X'00'                           NORMAL RETURN            09710000
+**--> We'll support this value
+RPLBLKER EQU   X'04'                           INVALID CONTROL BLOCK    09730000
+**--> We'll support this value
+RPLCBLKE EQU   X'04'                           ALTERNATE NAME FOR       09732000
+*                                              RPLBLKER          X03004 09732400
+**--> We 'll support this value
+RPLLOGER EQU   X'08'                           ILLOGICAL REQUEST        09734000
+**--> We'll support this value
+RPLLOGIC EQU   X'08'                           ALTERNATE NAME FOR       09740000
+*                                              RPLLOGER          X03004 09740400
+**--> We'll support this value
+RPLPHYER EQU   X'0C'                           PHYSICAL I/O ERROR       09742000
+**--> We'll support this value
+RPLPHYSC EQU   X'0C'                           ALTERNATE NAME FOR       09742400
+*                                              RPLPHYER          X03004 09742500
+**--> We'll support this value
+RPLNGRCC EQU   X'10'                           A CONDITIONAL COMMAND    09742800
+*                                              WAS ISSUED BUT THE       09742900
+*                                              CONDITION WAS NOT        09743000
+*                                              MET(VTAM)         X03004 09743100
+**--> We won't support this value
+RPLNOVAS EQU   X'10'                           SMSVSAM SERVER ADDRESS   09743200
+*                                              SPACE HAS NOT BEEN       09743300
+*                                              INITIALIZED OR NOT       09743400
+*                                              ACTIVE            @L3A*/ 09743500
+**--> We won't support this value
+RPLSPECC EQU   X'14'                           A TEMPORARY OUT-OF-CORE  09743600
+*                                              SITUATION EXISTS(VTAM)   09743700
+*                                                                X03004 09743800
+**--> We won't support this value
+RPLCMDRT EQU   X'18'                           THE REQUEST WAS          09743900
+*                                              CANCELLED BY THE RESET   09744000
+*                                              COMMAND(VTAM)     X03004 09744100
+**--> We won't support this value
+RPLPURGE EQU   X'1C'                           THE COMMAND WAS          09744200
+*                                              PURGED(VTAM)      X03004 09744900
+**--> We won't support this value
+RPLVTMNA EQU   X'20'                           VTAM IS NOT ACTIVE(VTAM) 09747400
+*                                                                X03004 09747800
+**--> We won't support this value
+RPLSYERR EQU   X'24'                           SYSTEM ERROR(VTAM)X03004 09748500
+**--> We won't support this value
+RPLDEVDC EQU   X'28'                           DIAL LINE IS             09749600
+*                                              DISCONNECTED(VTAM)X03004 09750000
+**--> We won't support this value
+RPLLIMEX EQU   X'2C'                           RESPONSE LIMIT           09750400
+*                                              EXCEEDED(VTAM)   X3004BS 09750500
+**--> We won't support this value
+RPLEXRQ  EQU   X'30'                           EXCEPTION REQUEST        09750600
+*                                              RECEIVED(VTAM)   X3004BS 09759700
+**--> We won't support this value
+RPLEXRS  EQU   X'34'                           EXCEPTION RESPONSE       09761700
+*                                              RECEIVED(VTAM)   X3004BS 09763700
+**--> We won't support this value
+RPLNOIN  EQU   X'38'                           NO INPUT                 09765700
+*                                              AVAILABLE(VTAM)  X3004BS 09767700
+**--> We won't support this value
+RPLVABND EQU   X'3C'                           VTAM ENCOUNTERED ABEND   09768100
+*                                              CONDITION       @XM08790 09768500
+**--> We won't support this value
+RPLERREG DS    XL1                             ALTERNATE NAME FOR       09769300
+*                                              RPLRTNCD                 09778400
+**--> We'll support this field
+
+RPLCNDCD DS    0XL2                            RPL CONDITION CODE       09787500
+**--> We'll support this field. Part of the error code structure
+
+RPLCMPON DS    0XL1                            COMPONENT ISSUING        09796600
+*                                              CODE(VSAM)               09805700
+**--> We'll support this field
+
+RPLFDB2  DS    XL1                             REASON CODE(VTAM) X03004 09814800
+**--> We won't support this field
+RPLERLK  EQU   X'80'                           ERROR LOCK SET    X03004 10052100
+**--> We won't support this value
+RPLRVID  EQU   X'40'                           RVI RECEIVED      X03004 10054100
+**--> We won't support this value
+RPLATND  EQU   X'20'                           ATTN RECEIVED     X03004 10056100
+**--> We won't support this value
+RPLDVUNS EQU   X'10'                           DEVICE UNUSABLE   X03004 10058100
+**--> We won't support this value
+RPLIOERR EQU   X'08'                           I/O ERROR TYPE- 0=INPUT/ 10060100
+*                                              1=OUTPUT          X03004 10060200
+**--> We won't support this value
+RPLDLGFL EQU   X'04'                           DIALOG INIT FAILED       10060500
+*                                                                X03004 10060600
+**--> We won't support this value
+RPLCUERR EQU   X'02'                           CONTROL UNIT FAILURE     10060700
+*                                                                X03004 10070700
+**--> We won't support this value
+RPLSTSAV EQU   X'01'                           SENSE BYTES PRESENT      10110600
+*                                                                X03004 10120600
+**--> We won't support this value
+
+RPLERRCD DS    0XL1                            ERROR CODE(VSAM)         10123100
+**--> We'll support this field - values are not in this DSECT.
+      DFSMS Macro Instructions lists them
+
+RPLFDB3  DS    XL1                             DATA FLAGS(VTAM)  X03004 10125000
+**--> We won't support this value
+MM>>>No, VTAM
+RPLUINPT EQU   X'80'                           UNSOLICITED INPUT X03004 10126900
+**--> We won't support this value
+RPLSV32  EQU   X'40'                           RESERVED          X03004 10128800
+**--> We won't support this value
+RPLREOB  EQU   X'20'                           END OF BLOCK      X03004 10130700
+**--> We won't support this value
+RPLREOM  EQU   X'10'                           END OF MESSAGE    X03004 10142300
+**--> We won't support this value
+RPLREOT  EQU   X'08'                           END OF TRANSMISSION      10153900
+*                                                                X03004 10163900
+**--> We won't support this value
+RPLLGFRC EQU   X'04'                           LOGOFF DETECTED   X03004 10203900
+**--> We won't support this value
+RPLRLG   EQU   X'02'                           LEADING GRAPHICS         10253900
+*                                              RECEIVED          X03004 10303900
+**--> We won't support this value
+RPLRDSOH EQU   X'01'                           START OF HEADER (SOH)    10313900
+*                                              RECEIVED          X03004 10323900
+**--> We won't support this value
+
+RPLKEYLE DS    0H                              KEY LENGTH (PROC=GEN)    10364400
+**--> We'll support this field
+RPLKEYL  DS    H                               ALTERNATE NAME FOR       10373300
+*                                              RPLKEYLE                 10382200
+**--> We'll support this field
+
+RPLSTRID DS    H                               CCW STRING IDENTIFIER    10391100
+**--> We won't support this field
+
+RPLTIME  EQU   RPLSTRID,2                      REQUEST DEADLOCK    @L3A 10394000
+*                                              TIMEOUT VALUE       @L3A 10396900
+**--> We won't support this field
+
+RPLCCHAR DS    A                               POINTER TO CONTROL       10400000
+*                                              CHARACTER FOR UNIT       10420000
+*                                              RECORD DEVICES           10440000
+**--> We won't support this field
+
+RPLLUWID EQU   RPLCCHAR,4                      POINTER TO UNIT OF  @L3A 10490000
+*                                              WORK ID             @L3A 10540000
+**--> We won't support this field
+
+RPLDACB  DS    A                               POINTER TO DATA ACB      10850000
+**--> We'll support this field
+
+RPLTCBPT DS    A                               POINTER TO TCB           10860000
+**--> We won't support this field. (I think z390 does not support a
+TCB, need to double-check)
+MM>>>Agreed
+
+RPLAREA  DS    A                               POINTER TO AREA          11000000
+*                                              CONTAINING DATA RECORD   11050000
+**--> We'll support this field
+
+RPLARG   DS    0A                              POINTER TO SEARCH        11100000
+*                                              ARGUMENT; POINTER TO     11102000
+*                                              RELATIVE ADDRESS FOR     11104000
+*                                              POINT OPERATION; POINTER 11106000
+*                                              TO SETPRT PARMLIST       11108000
+**--> We'll support this field
+
+RPLSAF   DS    XL2                             SOURCE ADDRESS           11110000
+*                                              FIELD(VTAM)       X03004 11120000
+**--> We won't support this field
+
+RPLDAF   DS    XL2                             DESTINATION ADDRESS      11130000
+*                                              FIELD(VTAM)       X03004 11142000
+**--> We won't support this field
+
+RPLOPTCD DS    0BL4                            OPTION CODES             11150000
+**--> We'll support this field
+
+RPLOPT1  DS    BL1                             OPTION BYTE 1            11200000
+**--> We'll support this field
+RPLLOC   EQU   X'80'                           LOCATE MODE; MOVE MODE   11250000
+*                                              IF 0                     11260000
+**--> We'll support this value
+RPLDIR   EQU   X'40'                           DIRECT ACCESS            11300000
+**--> We'll support this value
+RPLSEQ   EQU   X'20'                           SEQUENTIAL ACCESS        11450000
+**--> We'll support this value
+RPLSKP   EQU   X'10'                           SKIP SEQUENTIAL ACCESS   11470000
+**--> We'll support this value
+RPLASY   EQU   X'08'                           ASYNCHRONOUS PROCESSING  11500000
+**--> We'll reserve this value for future support
+RPLKGE   EQU   X'04'                           SEARCH KEY GT/EQ         11509000
+**--> We'll support this value
+RPLGEN   EQU   X'02'                           GENERIC KEY REQUEST      11518000
+**--> We'll support this value
+RPLECBSW EQU   X'01'                           EXTERNAL ECB             11527000
+**--> We 'll reeserve this value for futuer support. Used in conjunction with ASY
+RPLECBIN EQU   X'01'                           ALTERNATE NAME FOR       11529000
+*                                              RPLECBSW          X03004 11531000
+**--> We 'll reeserve this value for futuer support. Used in conjunction with ASY
+
+RPLOPT2  DS    BL1                             OPTION BYTE 2            11536000
+**--> We'll support this field
+RPLKEY   EQU   X'80'                           KEYED ACCESS             11554000
+**--> We'll support this value
+RPLADR   EQU   X'40'                           ADDRESSED ACCESS         11563000
+**--> We'll support this value
+RPLADD   EQU   X'40'                           ALTERNATE NAME FOR       11565000
+*                                              RPLADR                   11567000
+**--> We'll support this value
+RPLCNV   EQU   X'20'                           CONTROL INTERVAL ACCESS  11572000
+**--> We won't support this value
+RPLBWD   EQU   X'10'                           FWD=0/BWD=1      X04SVHS 11574000
+**--> We'll support this value
+RPLLRD   EQU   X'08'                           ARD=0/LRD=1      X04SVHS 11576000
+**--> We'll support this value. POINT with LRD gets you the last record in the dataset
+RPLWAITX EQU   X'04'                           AYNCH PROC WAIT @ZA07549 11578000
+**--> We'll reserve this value for future support
+RPLUPD   EQU   X'02'                           UPDATE                   11581000
+**--> We'll support this value
+RPLNSP   EQU   X'01'                           NOTE STRING POSITION     11590000
+**--> we'll support this value, it's an odd one
+      This OPTCD comes as a trio:
+      NSP sets RPLNSP on, RPLUPD ignored (off)
+      UPD sets RPLNSP off and RPLUPD on
+      NUP sets RPLNSP off and RPLUPD off
+      --> So UPD and NUP share a single bit in the RPL
+      NUP READ-only, position not held
+      UPD READ-for-UPDATE, pos held, rec locked, needs ENDREQ
+      NSP READ but can't decide, pos held, rec not locked, needs ENDREQ
+
+RPLOPT3  DS    BL1                             OPTION BYTE 3            11950000
+**--> We won't support this field
+RPLEODS  EQU   X'80'                           END OF USER SYSOUT       12000000
+**--> We won't support this value
+RPLSFORM EQU   X'40'                           SPECIAL FORM ON REMOTE   12050000
+*                                              PRINTER                  12100000
+**--> We won't support this value
+RPLBLK   EQU   X'20'                           BLOCKED UCS DATA CHECKS  12150000
+*                                              FIXED BLOCK PROCESSING   12160000
+**--> We won't support this value
+RPLVFY   EQU   X'10'                           VERIFY UCS/FCB           12200000
+*                                              INFORMATION              12210000
+**--> We won't support this value
+RPLFLD   EQU   X'08'                           LOAD UCS BUFFER IN       12250000
+*                                              FOLD MODE                12260000
+**--> We won't support this value
+RPLFMT   EQU   X'02'                           FCB LOAD                 12300000
+**--> We won't support this value
+RPLFRMT  EQU   X'06'                           UCS LOAD IF 00           12310000
+**--> We won't support this value
+RPLALIGN EQU   X'01'                           ALIGN FCB BUFFER LOADING 12350000
+**--> We won't support this value
+RPLOPTRL EQU   RPLOPT3                         VSAM-RLS OPTIONS  @L3A   12354100
+**--> We'll reserve this field for future support (RLS)
+RPLKL    EQU   X'80'                           1(0) KL(NOKL) REQUESTED  12358200
+*                                              ON GET UPD        @L3A   12362300
+**--> We'll reserve this value for future support (RLS)
+RPLRDNRI EQU   X'40'                           1=NO READ CONSISTENCY    12366400
+*                                                                @L3A   12370500
+**--> We won't support this value. zVSAM V2 always checks validity upon read
+RPLRDCR  EQU   X'20'                           1=CONSISTENT READ @L3A   12374600
+**--> We'll reserve this value for future support (RLS)
+RPLRDCRE EQU   X'10'                           CONSISTENT READ   @L3A   12377300
+*                                              EXPLICIT          @L3A   12380000
+**--> We'll reserve this value for future support (RLS)
+RPLRTYP  EQU   X'08'                           WITH RTYP1, 10=COLD,     12383600
+*                                              00=LL, 01=NONRLS  @L3A   12387200
+**--> We'll reserve this value for future support (RLS)
+RPLRTIND EQU   X'04'                           1(0) IND(SS) SPECIFIED   12391000
+*                                              ON IDARETLK       @L3A   12395100
+**--> We won't support this value
+RPLRTYP1 EQU   X'02'                           SEE RPLRTYP       @L3A   12397500
+**--> We'll reserve this value for future support (RLS)
+
+RPLOPT4  DS    BL1                             OPTCD BYTE 4             12400000
+**--> We won't support this field
+RPLENDTR EQU   X'80'                           3800 END OF TRANSMISSION 12450000
+*                                              (VS1)           @ZA92383 12458700
+**--> We won't support this value
+RPLXRBA  EQU   X'80'                           EXTENDED ADDRESSABILTY   12461600
+*                                              PROCESSING IN USE   @EAA 12464500
+**--> We won't support this value
+RPLMKFRM EQU   X'40'                           3800 MARK FORM  (VS1)    12467400
+*                                                              @ZA92383 12476100
+**--> We won't support this value
+RPLGTFA  EQU   X'40'                           GTF IS ACTIVE FOR VSAM   12479000
+*                                              TRACE RECORDS.      @TRA 12481900
+**--> We won't support this value
+RPLNOCIR EQU   X'20'                           NO CI RECLAIM       @L1A 12485000
+**--> We won't support this value
+*        NO MORE THAN ONE OF THE FOLLOWING THREE BITS CAN BE ON.        12485900
+*        ONE OF THEM IS SET ONLY WHEN ACBCCANY IS ON AND THE            12486800
+*        OPERATION IS INPUT.                                            12487700
+RPLCTA   EQU   X'10'                           RPLCCHAR POINTS TO AN    12488600
+*                                              ANSI CONTROL CHARACTER   12489500
+*                                                              @ZA92383 12490400
+**--> We won't support this value
+RPLCTM   EQU   X'08'                           RPLCCHAR POINTS TO A     12491300
+*                                              MACHINE CONTROL          12492200
+*                                              CHARACTER       @ZA92383 12493100
+**--> We won't support this value
+RPLCTO   EQU   X'04'                           OTHER FORMAT. RPLCCHAR   12494000
+*                                              POINTS TO A CODE BYTE    12494900
+*                                              THAT IDENTIFIES THE      12495800
+*                                              FORMAT. A CODE OF        12496700
+*                                              X'5A' MEANS CPDS.        12497600
+*                                                              @ZA92383 12498500
+**--> We won't support this value
+*        EQU   X'02'                           RESERVED FOR VSAM        12499000
+*                                              INTERNAL USE    @WA26115 12499500
+**--> We won't support this value
+
+RPLNXTRP DS    0A                              POINTER TO NEXT RPL      12500000
+**--> We'll reserve this field for future support
+RPLCHAIN DS    A                               ALTERNATE NAME FOR       12550000
+*                                              RPLNXTRP                 12600000
+**--> We'll reserve this field for future support
+
+RPLRLEN  DS    A                               LENGTH OF RECORD         12800000
+**--> We'll support this field
+
+RPLBUFL  DS    A                               USER BUFFER LENGTH       12810000
+**--> We'll support this field
+
+RPLOPTC2 DS    0XL4                            VTAM OPTIONS      X03004 12860000
+**--> We won't support this field
+RPLOPT5  DS    XL1                             OPTION BYTE 5     X03004 12870000
+**--> We won't support this field
+RPLDLGIN EQU   X'80'                           CONTINUE READING IN      12880000
+*                                              SPECIFIC TERMINAL MODE;  12882000
+*                                              IF 0, CONTINUE READING   12884000
+*                                              IN ANY TERMINAL MODE     12886000
+*                                                                X03004 12888000
+**--> We won't support this value
+RPLSSNIN EQU   X'40'                           CONTINUE DIALOG WITH THE 12890000
+*                                              SAME TERMINAL; IF 0, END 12890400
+*                                              DIALOG WITH THAT         12890800
+*                                              TERMINAL          X03004 12891200
+**--> We won't support this value
+RPLPSOPT EQU   X'20'                           PASS TERMINAL TO         12892000
+*                                              REQUESTING APPLICATION;  12892100
+*                                              IF 0, MAKE TERMINAL      12892200
+*                                              AVAILABLE TO ANY         12892300
+*                                              APPLICATION       X03004 12892400
+**--> We won't support this value
+RPLNERAS EQU   X'10'                           WRITE TO 3270 BUT DO NOT 12894000
+*                                              ERASE WHAT IS CURRENTLY  12894400
+*                                              DISPLAYED         X03004 12894800
+**--> We won't support this value
+RPLEAU   EQU   X'08'                           WRITE TO 3270 AND ERASE  12896000
+*                                              UNPROTECTED FIELDSX03004 12896400
+**--> We won't support this value
+RPLERACE EQU   X'04'                           WRITE TO 3270 AND ERASE  12898000
+*                                              CURRENT DISPLAY   X03004 12898100
+**--> We won't support this value
+RPLNODE  EQU   X'02'                           READ FROM ANY TERMINAL;  12898400
+*                                              IF 0, READ FROM A        12898500
+*                                              SPECIFIC TERMINAL X03004 12898600
+**--> We won't support this value
+RPLWROPT EQU   X'01'                           CONVERSATIONAL MODE;     12898800
+*                                              IF 0, NON-CONVERSATIONAL 12898900
+*                                              MODE              X03004 12899000
+**--> We won't support this value
+
+RPLOPT6  DS    XL1                             OPTION BYTE 6     X03004 12899200
+**--> We won't support this field
+RPLEOB   EQU   X'80'                           WRITE A BLOCK OF DATA    12899600
+*                                                                X03004 12903000
+**--> We won't support this value
+RPLEOM   EQU   X'40'                           WRITE THE LAST BLOCK     12906400
+*                                              OF A MESSAGE      X03004 12908400
+**--> We won't support this value
+RPLEOT   EQU   X'20'                           WRITE THE LAST BLOCK     12909800
+*                                              OF THE TRANSMISSION      12911800
+*                                                                X03004 12912200
+**--> We won't support this value
+RPLCOND  EQU   X'10'                           DO NOT STOP OPERATION    12913200
+*                                              IF STARTED (USED WITH    12915200
+*                                              RESET REQUEST)    X03004 12915600
+**--> We won't support this value
+RPLNCOND EQU   X'08'                           STOP OPERATION           12916600
+*                                              IMMEDIATELY (USED WITH   12918600
+*                                              RESET REQUEST)    X03004 12920600
+**--> We won't support this value
+RPLLOCK  EQU   X'04'                           RESET ERROR LOCK TO      12926600
+*                                              UNLOCKED STATUS   X03004 12927000
+**--> We won't support this value
+RPLRSV67 EQU   X'02'                           RESERVED          X03004 12928600
+**--> We won't support this value
+RPLRSV68 EQU   X'01'                           RESERVED          X03004 12930600
+**--> We won't support this value
+
+RPLOPT7  DS    XL1                             OPTION BYTE 7     X03004 12932600
+**--> We won't support this field
+RPLCNALL EQU   X'80'                           ALL TERMINALS IN OPNDST  12933000
+*                                              LIST MUST BE AVAILABLE   12934100
+*                                              BEFORE ANY ARE CONNECTED 12936100
+*                                                                X03004 12936500
+**--> We won't support this value
+RPLCNANY EQU   X'40'                           CONNECT ANY ONE TERMINAL 12936600
+*                                              IN OPNDST LIST    X03004 12937000
+**--> We won't support this value
+RPLCNIMM EQU   X'20'                           RESERVED          X03004 12937700
+**--> We won't support this value
+RPLQOPT  EQU   X'10'                           QUEUE THE OPNDST REQUEST 12939900
+*                                              IF IT CANNOT BE          12940300
+*                                              SATISFIED IMMEDIATELY;   12940700
+*                                              IF 0, REJECT THE OPNDST  12940800
+*                                              REQUEST IF IT CANNOT BE  12940900
+*                                              SATISFIED IMMEDIATELY    12941200
+*                                                                X03004 12941600
+**--> We won't support this value
+RPLTPOST EQU   X'08'                           RPL ALREADY UNDER PSS    12942600
+*                                                              @XM08790 12942700
+**--> We won't support this value
+RPLRLSOP EQU   X'04'                           SCHEDULE THE RELREQ EXIT 12942900
+*                                              OF THE REQUIRED TERMINAL 12943000
+*                                              IMMEDIATELY; IF 0,       12943100
+*                                              EITHER WAIT FOR THE      12943200
+*                                              TERMINAL TO BECOME       12943600
+*                                              AVAILABLE OR REJECT THE  12943700
+*                                              REQUEST IF THE TERMINAL  12944100
+*                                              IS BUSY(DEPENDS ON THE   12944200
+*                                              SETTING OF RPLQOPT)      12944500
+*                                                                X03004 12945600
+**--> We won't support this value
+RPLTCRNO EQU   X'02'                           CLOSE IN PROCESS FOR PO  12946000
+*                                              INTERFACE       @Z40BHUC 12946100
+**--> We won't support this value
+RPLRSV78 EQU   X'01'                           RESERVED          X03004 12946400
+**--> We won't support this value
+
+RPLOPT8  DS    XL1                             OPTION BYTE 8     X03004 12946800
+**--> We won't support this field
+RPLODACQ EQU   X'80'                           THE APPLICATION REQUIRES 12947200
+*                                              A SPECIFIC TERMINAL      12947600
+*                                                                X03004 12948000
+**--> We won't support this value
+RPLODACP EQU   X'40'                           THE APPLICATION WILL     12948400
+*                                              ACCEPT ANY TERMINAL      12948800
+*                                              DESIRING LOGON    X03004 12949200
+**--> We won't support this value
+RPLODPRM EQU   X'20'                           A SPECIFIC TERMINAL IS   12949600
+*                                              TO BE PREEMPTED EVEN     12950000
+*                                              THOUGH ANOTHER           12952000
+*                                              APPLICATION IS HOLDING   12953000
+*                                              IT (TOLTEP ONLY)  X03004 12955000
+**--> We won't support this value
+RPLPEND  EQU   X'10'                           PREEMPT THE TERMINAL     12957700
+*                                              AFTER ALL PENDING        12962000
+*                                              OPERATIONS ARE COMPLETED 12962100
+*                                              (TOLTEP ONLY)     X03004 12962200
+**--> We won't support this value
+RPLSESS  EQU   X'08'                           PREEMPT THE TERMINAL     12962400
+*                                              AFTER COMPLETION OF THE  12964400
+*                                              CURRENT DIALOG SESSION   12966400
+*                                              (TOLTEP ONLY)     X03004 12966800
+**--> We won't support this value
+RPLACTV  EQU   X'04'                           PREEMPT THE TERMINAL IF  12967100
+*                                              CONNECTED BUT NOT BUSY   12969100
+*                                              (TOLTEP ONLY)     X03004 12971100
+**--> We won't support this value
+RPLUNCON EQU   X'02'                           PREEMPT THE TERMINAL     12971800
+*                                              IMMEDIATELY              12973800
+*                                              (TOLTEP ONLY)     X03004 12975800
+RPLRSV88 EQU   X'01'                           RESERVED          X03004 12976500
+**--> We won't support this value
+         ORG   RPLOPTC2                        VSAM RPL DEFINITION @ZZA 12977200
+         DS    XL1                             VSAM RPL - RESERVED @ZZA 12977900
+**--> We won't support this field
+
+RPLAIXID DS    XL1                             AIX POINTER TYPE    @ZZM 12978600
+**--> We'll support this field
+RPLAXPKP EQU   X'80'                           RBA=1/PRIME=0       @ZZM 12979300
+**--> We'll support this value
+
+         DS    XL2                             VSAM RPL - RESERVED @ZZA 12980000
+**--> We won't support this field
+
+RPLRBAR  DS    0CL8                            RBA RETURN LOCATION      12981200
+**--> We'll support this value
+
+RPLAIXPC DS    XL2                             AIX POINTER COUNT   @ZZC 13004100
+**--> We'll support this field (as XL8 to account for extreme cases)
+
+         DS    XL2                             RESERVED            @ZZC 13027000
+**--> We won't support this field
+
+RPLDDDD  DS    CL4                             RETURN AREA FOR          13050000
+*                                              RELATIVE BYTE ADDRESS    13060000
+**--> We'll support this field (as XL8 to cater for large files)
+
+RPLEXTDS DS    0XL1                            EXIT DEFINITIONS@Z9999DT 13100000
+**--> We'll support this field
+RPLEXTD1 DS    XL1                             ALTERNATE NAME FOR       13102000
+*                                              RPLEXTDS          X03004 13102400
+**--> We'll support this field
+RPLEXSCH EQU   X'80'                           AN EXIT HAS BEEN         13104000
+*                                              SCHEDULED         X03004 13104100
+**--> We won't support this value
+RPLNEXIT EQU   X'40'                           NO EXIT WAS SPECIFIED    13106000
+*                                                                X03004 13106100
+**--> We'll support this value
+RPLEXIT  EQU   X'20'                           ASYNCH EXIT     @XM01127 13106500
+**--> We'll support this value, although the exit will be scheduled
+synchronously
+RPLTCRYP EQU   X'08'                           IF ON, ENCRYPTION        13106800
+*                                              FEATURE REQ     @G40AKSL 13107100
+**--> We won't support this value
+RPLNIB   EQU   X'04'                           THE RPLARG FIELD         13107600
+*                                              CONTAINS A POINTER       13117600
+*                                              TO THE NIB        X03004 13119600
+**--> We won't support this value.
+RPLBRANC EQU   X'02'                           USE A BRANCH ENTRY       13124800
+*                                              TO THE MACRO      X03004 13126800
+**--> We won't support this value
+
+RPLACTIV DS    XL1                             ACTIVE INDICATOR -       13141600
+*                                              X'FF' INDICATES ACTIVE;  13143600
+*                                              X'00' INDICATES INACTIVE 13145600
+*                                                                X03004 13147600
+**--> We'll support this field
+
+RPLEMLEN DS    H                               LENGTH OF THE ERROR      13150000
+*                                              MESSAGE AREA             13200000
+**--> We'll support this field
+
+RPLERMSA DS    A                               POINTER TO THE ERROR     13250000
+*                                              MESSAGE AREA             13260000
+**--> We'll support this field
+

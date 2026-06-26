@@ -1,0 +1,21 @@
+Hugh's Agenda Items
+===================
+
+Meeting time is limited, so for each item: consider what _needs_ to be done at the meeting, and what can be left for email follow-up.
+
+
+ - Tracing facilities (for z390 users, and for z390 developers): existing ones, and what improvements are desirable?
+
+ - Code is monolithic, not discrete objects. What problems does this cause, and what's to be gained by fixing it.
+
+ - Improve code maintainability generally. Including javadoc.
+
+ - System DSECTs eg IFGACB: I want to create Java Interface definitions from the assembly listings. Is there a set of control block DSECT source kept in one place?
+
+ - Catalog: are we, or are we not, leaving this as is?
+
+ - implementationn approach: develop basic approach for, say, ESDS (no AIX) or RRDS first. Find out what doesn't work before plunging into supporting indexes, freespace, spanning etc. Also related: delivery schedule. Do you want deliveries of incremental functionality, fully tested?
+
+ - An online documentation repository (for the duration of the project anyway). Eliminate multiple copies. Shared for _update_ if possible. Also include an archive of selected email conversations.
+
+

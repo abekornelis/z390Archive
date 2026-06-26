@@ -1,0 +1,58 @@
+zVSAM (in z390) Project
+=======================
+
+Hugh Sweeney (hsweeney@pobox.com), his notes.
+--------------------------------------------
+
+This is a collection of notes about this project that don't belong anywhere else. (One other document where I have already started making notes is RPIs.txt, which is about changes that I have made, or recommend making.)
+
+I responded to Abe's status update email (Jan 1 2018) with an offer to do Java work. See email https://mail.google.com/mail/u/0/?tab=wm#advanced-search/from=hsweeney%40pobox.com&to=abe%40bixoft.nl&subject=status+update&subset=all&has=java+abuse&within=1d&sizeoperator=s_sl&sizeunit=s_smb&query=from%3A(hsweeney%40pobox.com)+to%3A(abe%40bixoft.nl)+subject%3A(status+update)+java+abuse/160b39d4626b084b .  (I hope I can find a simpler way to link to emails from this document. Currently all my project emails in Gmail have the label z390.) Note: these links only work from a machine signed into my Google account.
+
+My usual development environment is OpenJDK 1.8 on Ubuntu Linux 12.04. I hope to update to 16.04 shortly. I also have access to some Windows 7, 8.1, and XP machines. I would like to do some development on Windows 8.1 but it's on a tablet and I have no suitable keyboard. Tried Samba but failed miserably to get it working. Also note the Windows file comparison programs FC and COMP failed with return codes signifying "syntax error" when I tried them. Eventually found that FC has (long-known) bugs. In particular it can't handle records longer than 127 bytes. Various z390 source files have lines longer than that. So, I'm not pursuing any source development on Windows.
+
+Some years ago I installed z390 1.5.06 on a USB thumb drive. This enables me to run z390 on any machine that has a JVM. I had to modify the installation process to allow the single (basically Windows) installation to be used on Linux also. (The thumb drive has label CRUZER2 and serial number 7816-7291. The installation directory is /media/CRUZER2/Dev/z.
+
+I have created directory /media/CRUZER2/Dev/zVSAM for all project code and documentation. On 2018-03-15 I downloaded Abe's Beta 12 and extracted all to /media/CRUZER2/Dev/zB12.
+
+I edit source with gedit on Linux, and usually PFE on Windows. PFE can handle both Unix and Windows line separators, unlike Notepad. It can be downloaded free of charge. On another Linux machine I sometimes use geany. It can handle Unix, Windows, and MacOS line separators. I also use an Xedit clone, The Hessling Editor (THE), on Linux and Windows. After 15+ years using Xedit every day I have a set of macros that also work on THE, and muscle-memory of how to do most things with Xedit-like editors,, such as THE. (BTW, it also has an ISPF Editor compatibility mode.) 
+
+I use Rexx as my scripting language on this project. I am using the Regina implementation on both Linux and Windows. Rexx also runs on TSO and CMS of course. I am building tools that compare files and build all or part of the project.
+
+I tried to produce source documentation from the source code by running Javadoc. It totally failed to produce any documentation because of a single illegal source character in tz390. See /media/CRUZER2/Dev/zVSAM/RPIs.txt for details, and also email https://mail.google.com/mail/u/0/?tab=wm#search/is%3Asent+tz390+javadoc+zscii/1624e651cdba5dea . (Update 2018-06-05: I can suppress this problem by specifying -encoding on the javac/javadoc command line. THere might be long-term knock-on effects from doing that so I've asked Don for clarification.)
+
+So I bodged a version of tz390 with that character taken out in order to create the documentation. It's because of bodges like that (not functionally part of the project) that I need to be able to compare source files. Otherwise I will end up with many source files with unknown changes. (Progress(?) so far: Windows FC and COMP unreliable; Linux diff works but so far produces huge output for what I think are minimal changes. Probably valid, but definitely unwieldy.)
+
+Because neither FC nor COMP nor diff enables me to easily find changed lines in source code, I'm using a THE macro that I wrote years ago on CMS (Compare.the). (THE on Ubuntu has a problem with invoking macros so I'm using this on Windows only.)
+Update: the problem in Ubuntu is getaroundable so I've copied the macro to Ubuntu and am using it there too (with a little more tediousness). 
+
+(Memo: there's a product that analyses source files using KWIC that could give us a total cross-ref of all variable names throughout all the Java source. I tried it but it needs admin rights to install. Might try again. Ref: https://groups.google.com/forum/#!msg/comp.lang.cobol/tgG3Sc53Gbc/C5xI2jeUAQAJ;context-place=forum/comp.lang.cobol ) 
+
+A note on Javadoc: it extracts from source code any comments that follow a particular format. Normal Java multiline comments begin with '/*' and end with '*/'. The comments that Javadoc extracts are the subset beginning '/**'. It then looks for particular keywords within those and formats them. Much of the existing Java code has comments beginning '/**' that were probably written before Javadoc existed. That's why some of the Javadoc output large swathes of unformatted z390 commentary.
+
+
+
+2018-06-13
+I saw IVP.BAT mentioned in the User Guide at the end of the Installation section so I ran it and got this output:
+e:\Dev\z>ECHO OFF 
+IVP OS   version = Windows 7
+IVP J2SE version = 1.8.0_91
+IVP z390 version = V1.6.00b11
+IVP z390 base install not equal z390.jar PTF version
+IVP RT optional  zip not installed
+IVP MVS optional  zip not installed
+IVP see warnings above
+IVP exiting with RC = 4
+
+Is this expected? Is it documented? Why is the z390 base install version different to the PTF version? What is the PTF version? Which lines are warnings? I suggest that each warning line should be identified as a warning.
+(In iz390, if j2se_ver is too low, message is issued saying "1.5+ required". Should that say "1.6+"?)
+2018-06-15 Just spotted that I renamed z390.jar and installed a new one on 2018-02-27.
+Now:
+E:\Dev\z>ECHO OFF 
+IVP OS   version = Windows 7
+IVP J2SE version = 1.8.0_131
+IVP z390 version = V1.5.06
+IVP RT optional  zip not installed
+IVP MVS optional  zip not installed
+IVP see warnings above
+IVP exiting with RC = 4
+Note: iz390 doesn't necessarily exit with highest RC found. A warning detected after an error can set the RC (which was 8) to 4.
